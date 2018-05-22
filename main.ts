@@ -156,10 +156,13 @@ namespace Matrix {
     /**
      * A NeoPixel strip
      */
-    let chrs: string[] = ['0', ' ', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+    let chrs: string[] = ['0', ' ', '?', '@', '$', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
 
     let chr: number[] = [0x3C, 0x66, 0x42, 0x42, 0x42, 0x66, 0x3C, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x3c, 0x66, 0x66, 0x0c, 0x18, 0x00, 0x18, 0x00,
+		0x3c, 0x66, 0x5e, 0x56, 0x5c, 0x40, 0x7c, 0x00,
+		0x3c, 0x5a, 0x58, 0x3c, 0x1a, 0x5a, 0x3C, 0x00,
         0x10, 0x70, 0x10, 0x10, 0x10, 0x10, 0x7C, 0x00,
         0x3C, 0x42, 0x02, 0x04, 0x18, 0x22, 0x7E, 0x00,
         0x3C, 0x42, 0x02, 0x1C, 0x02, 0x42, 0x3C, 0x00,
@@ -572,7 +575,7 @@ namespace Matrix {
             let sub = 0;
             this.update();
             for (i = 0; i < l; i++) {
-                for (j = 0; j < 63; j++) {
+                for (j = 0; j < 66; j++) {
                     if (str[i] == chrs[j]) {
                         index = j;
                         break;
@@ -701,7 +704,7 @@ namespace Matrix {
         }
     }
 
-    //% blockId="neopixel_create" block="creat NeoPixel 2 %SerialPinTx"
+    //% blockId="neopixel_create" block="Create Matrix %SerialPinTx"
     //% weight=90 blockGap=8
     export function create(SerialPinTx: DigitalPin): Strip {
         let strip = new Strip();
