@@ -125,8 +125,6 @@ enum Pic {
 
 }
 
-
-
 enum _Dir {
     //% block=east
     east = 0,
@@ -157,12 +155,13 @@ namespace Matrix {
      * A NeoPixel strip
      */
     let chrs: string[] = ['0', ' ', '?', '@', '$', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+    let chrsNo: number = 66; // number of chrs
 
     let chr: number[] = [0x3C, 0x66, 0x42, 0x42, 0x42, 0x66, 0x3C, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x3c, 0x66, 0x66, 0x0c, 0x18, 0x00, 0x18, 0x00,
-		0x3c, 0x66, 0x5e, 0x56, 0x5c, 0x40, 0x7c, 0x00,
-		0x3c, 0x5a, 0x58, 0x3c, 0x1a, 0x5a, 0x3C, 0x00,
+        0x3c, 0x66, 0x66, 0x0c, 0x18, 0x00, 0x18, 0x00,
+        0x3c, 0x66, 0x5e, 0x56, 0x5c, 0x40, 0x7c, 0x00,
+        0x3c, 0x5a, 0x58, 0x3c, 0x1a, 0x5a, 0x3C, 0x00,
         0x10, 0x70, 0x10, 0x10, 0x10, 0x10, 0x7C, 0x00,
         0x3C, 0x42, 0x02, 0x04, 0x18, 0x22, 0x7E, 0x00,
         0x3C, 0x42, 0x02, 0x1C, 0x02, 0x42, 0x3C, 0x00,
@@ -247,6 +246,7 @@ namespace Matrix {
 
     let queue: number[] = [0];
     let screen: number[] = [0];
+    let NoBlk: number = 1;
 
     export class Strip {
         buf: Buffer;
@@ -258,310 +258,106 @@ namespace Matrix {
         _mode: number;
         _matrixWidth: number; // number of leds in a matrix - if any
         len: number;
+        NoBlk: number; // No of Matrix block
 
-        //% blockId="showPixel" block="%strip| display pixel x %x| y %y| color %color"
+        //% blockId="showPixel" block="%strip| display pixel x %x| y %y| Block %BlkNo| color %color"
         //% x.min=0 x.max=7
         //% y.min=0 y.max=7
-        setPixel(x: number, y: number, color: number): void {
-            let offset = y * 8 + x
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=85
+        setPixel(x: number, y: number, BlkNo: number, color: number): void {
+            let offset = (y * 8 + x) + (BlkNo * 64)
             this.setPixelColor(offset, color)
             this.show()
         }
 
-        display(color: number): void {
+        display(color: number, BlkNo: number): void {
             let i = 0;
             let j = 0;
             let k = 0;
             for (k = 0; k < 8; k++) {
                 for (i = 0; i < 8; i++) {
                     if (((screen[k] >> i) & 0x1) == 1) {
-                        this.setPixel(7 - i, k, color);
+                        this.setPixel(7 - i, k, BlkNo, color);
                     }
                 }
             }
         }
 
-        //% blockGap=50
-        //% blockId="showIcons" block="%strip| display Icon %index"
-        //% index.fieldEditor="gridpicker" index.fieldOptions.columns=3
-        showIcons(index: Pic): void {
-            screen = [0];
-            this.update();
-            switch (index) {
-                case Pic.smile:
-                    screen = [0x00, 0x42, 0xE7, 0x42, 0x00, 0x42, 0x3C, 0x00];
-                    this.display(0xFF00FF);
-                    break;
-                case Pic.eagleEye:
-                    screen = [0x81, 0xC3, 0xA5, 0xFF, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFF00)
-                    screen = [0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFFFF);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x3C];
-                    this.display(0x8a2be2);
-                    break;
-                case Pic.embarrassed:
-                    screen = [0x24, 0x24, 0x24, 0x42, 0x81, 0x00, 0x00, 0x00];
-                    this.display(0x8a2be2);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0x00ffff);
-                    break;
-                case Pic.sad:
-                    screen = [0x42, 0xA5, 0xA5, 0xA5, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x8a2be2);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0x0000ff);
-                    break;
-                case Pic.scaleEys:
-                    screen = [0xF0, 0x90, 0x90, 0xF0, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x0000FF);
-                    screen = [0x00, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x4b0082);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x7E, 0x42];
-                    this.display(0xFFFF00);
-                    break;
-                case Pic.dumbfounded:
-                    screen = [0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFF00);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42, 0x00];
-                    this.display(0xFF0000);
-                    break;
-                case Pic.distress:
-                    screen = [0x20, 0x47, 0x80, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0x4b0082);
-                    screen = [0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFF00FF);
-                    break;
-                case Pic.spades:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xFF, 0x5A, 0x18, 0x3C];
-                    this.display(0x8a2be2);
-                    break;
-                case Pic.square:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xFF, 0x7E, 0x3C, 0x18];
-                    this.display(0xFF0000);
-                    break;
-                case Pic.glance:
-                    screen = [0x00, 0xE7, 0x63, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xaaaaaf);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x3C, 0x00];
-                    this.display(0x0000ff);
-                    break;
-                case Pic.blink:
-                    screen = [0x00, 0xE2, 0xE4, 0xE7, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xaaaaaf);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x3C, 0x00];
-                    this.display(0x00ffaa);
-                    break;
-                case Pic.anger:
-                    screen = [0x80, 0x42, 0x24, 0xE6, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFF0000);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0xaaaaaf);
-                    break;
-                case Pic.crossEyed:
-                    screen = [0x24, 0xE7, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFA500);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x3C, 0x00];
-                    this.display(0xFF00FF);
-                    break;
-                case Pic.terrorist:
-                    screen = [0x81, 0x66, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0xFF0000);
-                    screen = [0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xCD6839);
-                    break;
-                case Pic.dinosaurEgg:
-                    screen = [0x24, 0x66, 0xE7, 0xE7, 0x66, 0x24, 0x00, 0x00];
-                    this.display(0x8a2be2);
-                    screen = [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00];
-                    this.display(0x00FF00);
-                    screen = [0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x00, 0x00];
-                    this.display(0x4b0082);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x83, 0xFF];
-                    this.display(0xFFFFFF);
-                    break;
-                case Pic.whale:
-                    screen = [0x44, 0x28, 0x10, 0x00, 0x00, 0x30, 0x78, 0xFC];
-                    this.display(0xFFFFFF);
-                    screen = [0x00, 0x00, 0x00, 0x30, 0x78, 0xCD, 0x87, 0x03];
-                    this.display(0x0000FF);
-                    break;
-                case Pic.grizzlies:
-                    screen = [0xC3, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFFFF);
-                    screen = [0x00, 0x00, 0x00, 0x18, 0x3C, 0x3C, 0x99, 0x7E];
-                    this.display(0xCD6839);
-                    break;
-                case Pic.butterfly:
-                    screen = [0x66, 0x99, 0x81, 0x42, 0x24, 0x42, 0x42, 0x24];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.dog:
-                    screen = [0xC3, 0xC3, 0x7E, 0x5A, 0x7E, 0x7E, 0xC3, 0xFF];
-                    this.display(0xaaaaaf);
-                    break;
-                case Pic.owl:
-                    screen = [0x42, 0x66, 0x7E, 0xFF, 0xDB, 0xFF, 0x7E, 0x3C];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.rocket:
-                    screen = [0x18, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5];
-                    this.display(0xFF0000);
-                    screen = [0x00, 0x24, 0x24, 0x24, 0x24, 0x24, 0x00, 0x00];
-                    this.display(0xFFFFFF);
-                    screen = [0x00, 0x18, 0x18, 0x00, 0x00, 0x00, 0x5A, 0x00];
-                    this.display(0xFFFF00);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.comma:
-                    screen = [0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x00, 0x00, 0x00];
-                    this.display(0x0000FF);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0C, 0x18];
-                    this.display(0xaaaaaf);
-                    break;
-                case Pic.exclamation:
-                    screen = [0x18, 0x18, 0x18, 0x18, 0x18, 0x00, 0x18, 0x18];
-                    this.display(0x0000FF);
-                    break;
-                case Pic.lifting:
-                    screen = [0x00, 0x42, 0xC3, 0xC3, 0xC3, 0xC3, 0x42, 0x00];
-                    this.display(0x0000FF);
-                    screen = [0x00, 0x00, 0x00, 0x3C, 0x3C, 0x00, 0x00, 0x00];
-                    this.display(0x4b0082);
-                    break;
-                case Pic.peach:
-                    screen = [0x00, 0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18];
-                    this.display(0xFF0000);
-                    break;
-                case Pic.doubt:
-                    screen = [0x3C, 0x7E, 0x66, 0x06, 0x0C, 0x18, 0x00, 0x18];
-                    this.display(0x0000FF);
-                    break;
-                case Pic.left:
-                    screen = [0x00, 0x20, 0x60, 0xFF, 0xFF, 0x60, 0x20, 0x00];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.right:
-                    screen = [0x00, 0x04, 0x06, 0xFF, 0xFF, 0x06, 0x04, 0x00];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.down:
-                    screen = [0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x3C, 0x18];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.up:
-                    screen = [0x18, 0x3C, 0x7E, 0x18, 0x18, 0x18, 0x18, 0x18];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.true:
-                    screen = [0x00, 0x00, 0x03, 0x06, 0xCC, 0x78, 0x30, 0x00];
-                    this.display(0xFF0000);
-                    break;
-                case Pic.key:
-                    screen = [0x38, 0x08, 0x38, 0x08, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFFFF);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x7E, 0x42, 0x42, 0x7E];
-                    this.display(0x0000FF);
-                    break;
-                case Pic.hanger:
-                    screen = [0x00, 0x00, 0x00, 0x18, 0x24, 0x42, 0x81, 0xFF];
-                    this.display(0x00FF00);
-                    screen = [0x18, 0x24, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFA500);
-                    break;
-                case Pic.tv:
-                    screen = [0x81, 0x42, 0x24, 0x7E, 0x42, 0x42, 0x42, 0x7E];
-                    this.display(0x0000FF);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x3C, 0x3C, 0x3C, 0x00];
-                    this.display(0x00ff00);
-                    break;
-                case Pic.sailing:
-                    screen = [0x10, 0x10, 0x10, 0x10, 0x10, 0xFF, 0x7E, 0x3C];
-                    this.display(0x4b0082);
-                    screen = [0x00, 0x08, 0x0C, 0x08, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFF0000);
-                    break;
-                case Pic.squirrel:
-                    screen = [0x00, 0x00, 0x00, 0x24, 0x00, 0x18, 0x3C, 0x7E];
-                    this.display(0xFFFFFF);
-                    screen = [0x24, 0x24, 0x3C, 0x5A, 0xFF, 0xE7, 0xC3, 0x00];
-                    this.display(0xFFA500);
-                    break;
-                case Pic.et:
-                    screen = [0x3C, 0xFF, 0x99, 0xFF, 0x7E, 0x3C, 0x5A, 0x81];
-                    this.display(0xFF00FF);
-                    break;
-                case Pic.alien:
-                    screen = [0x81, 0x42, 0x3C, 0xFF, 0x99, 0xFF, 0x7E, 0x3C];
-                    this.display(0x4b0082);
-                    break;
-                case Pic.mushroom:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xC9, 0xDB, 0x00, 0x00];
-                    this.display(0xFFA500);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x66];
-                    this.display(0x00FF00);
-                    break;
-                case Pic.longEars:
-                    screen = [0xE7, 0x3C, 0x7E, 0x5A, 0xFF, 0xBD, 0x3C, 0x7E];
-                    this.display(0xFFA500);
-                    break;
-                case Pic.surprised:
-                    screen = [0x24, 0x7E, 0x5A, 0xFF, 0xFF, 0x66, 0x66, 0x24];
-                    this.display(0x0000FF);
-                    break;
-                case Pic.home:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x0000FF);
-                    screen = [0x02, 0x02, 0x00, 0x00, 0x5E, 0x7E, 0x7A, 0x7A];
-                    this.display(0xaaaaaf);
-                    break;
-                case Pic.false:
-                    screen = [0x00, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x00];
-                    this.display(0x0000FF);
-                    break;
+        displayAll(color: number): void {
+            let i = 0;
+            let j = 0;
+            let k = 0;
+            for (j = 0; j < this.NoBlk; j++) {
+                for (k = 0; k < 8; k++) {
+                    for (i = 0; i < 8; i++) {
+                        if (((screen[k + (j * 8)] >> i) & 0x1) == 1) {
+                            this.setPixel(7 - i, k, j, color);
+                        }
+                    }
+                }
             }
         }
+
+        //% blockId="showCustomNew" block="%strip| display New Custom Icon string %str| Block %BlkNo| color %color"
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=75
+        showCustomNew(str: string, BlkNo: number, color: number): void {
+            screen = [0];
+            this.update(BlkNo);
+            screen = [hex2dec(str.substr(0, 2)), hex2dec(str.substr(2, 2)), hex2dec(str.substr(4, 2)), hex2dec(str.substr(6, 2)), hex2dec(str.substr(8, 2)), hex2dec(str.substr(10, 2)), hex2dec(str.substr(12, 2)), hex2dec(str.substr(14, 2))];
+            this.display(color, BlkNo);
+            serial.writeString(str);
+        }
+
+        //% blockId="showCustomUpdate" block="%strip| display Update Custom Icon string %str| Block %BlkNo| color %color"
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=70
+        showCustomUpdate(str: string, BlkNo: number, color: number): void {
+            screen = [hex2dec(str.substr(0, 2)), hex2dec(str.substr(2, 2)), hex2dec(str.substr(4, 2)), hex2dec(str.substr(6, 2)), hex2dec(str.substr(8, 2)), hex2dec(str.substr(10, 2)), hex2dec(str.substr(12, 2)), hex2dec(str.substr(14, 2))];
+            this.display(color, BlkNo);
+            serial.writeString(str);
+        }
+
 
         setChar(color: number): void {
             let i = 0;
             let j = 0;
             let k = 0;
-
-            for (i = 0; i < 8; i++) {
+            // basic.showNumber(this.NoBlk);
+            for (i = 0; i < (8 * this.NoBlk); i++) {
                 screen[i] = queue[i];
             }
-            this.display(color);
+            this.displayAll(color);
             basic.pause(100);
 
-            if (this.len > 2) {
-                while (k++ < (this.len + 1)) {
+            if (this.len > (this.NoBlk + 1)) {
+                while (k++ < (this.len + this.NoBlk)) {
                     for (i = 0; i < 8; i++) {
                         // this.clear();
 
-                        for (j = 0; j < 8; j++) {
+                        for (j = 0; j < 8 * this.NoBlk; j++) {
                             screen[j] = (screen[j] << 1) | ((queue[k * 8 + j] & (0x1 << (7 - i))) >> (7 - i));
                         }
-                        this.update();
-                        this.display(color);
+                        this.updateAll();
+                        this.displayAll(color);
                         basic.pause(100);
                     }
-                    this.clear()
+                    this.updateAll();
+                    this.show();
                 }
             }
             queue = [0];
         }
 
-        //% blockId="clearPixel" block="%strip| clear pixel x %x| y %y"
-        clearPixel(x: number, y: number): void {
-            this.setPixel(x, y, NeoPixelColors.Black);
+        //% blockId="clearPixel" block="%strip| clear pixel x %x| y %y | Block %BlkNo"
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=80
+        clearPixel(x: number, y: number, BlkNo: number): void {
+            this.setPixel(x, y, BlkNo, NeoPixelColors.Black);
         }
 
         //% blockId="showNumber" block="%strip| show number %num| color %color"
         //% parts="neopixel"
         showNumber(num: number, color: number): void {
-            this.update();
-            this.showString(num.toString(), color)
+            this.updateAll();
+            this.showString(num.toString(), color);
         }
 
         //% blockId="showString" block="%strip| display string %str| color %color"
@@ -573,9 +369,10 @@ namespace Matrix {
             let j = 0;
             let k = 0;
             let sub = 0;
-            this.update();
+            this.updateAll();
+            this.show();
             for (i = 0; i < l; i++) {
-                for (j = 0; j < 66; j++) {
+                for (j = 0; j < chrsNo; j++) {
                     if (str[i] == chrs[j]) {
                         index = j;
                         break;
@@ -585,34 +382,46 @@ namespace Matrix {
                     queue[sub++] = chr[index * 8 + k];
                 }
             }
-            for (i = 0; i < 8; i++) {
+            for (i = 0; i < 8 * this.NoBlk; i++) {
                 queue[sub++] = 0;
             }
-            serial.writeNumber(this.len);
+            //            serial.writeNumber(this.len);
             this.setChar(color);
         }
 
-        //% blockId="showCompass" block="%strip| display dir %dir| color %color"
-        showCompass(dir: _Dir, color: number): void {
+        //% blockId="showCompass" block="%strip| display dir %dir| Block %BlkNo | color %color"
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true
+        showCompass(dir: _Dir, BlkNo: number, color: number): void {
             let i = 0;
             let j = 0;
             let index = 0;
             index = dir * 8;
-            this.update();
+            this.update(BlkNo);
             for (i = 0; i < 8; i++) {
                 for (j = 0; j < 8; j++) {
                     if (((dirs[index + i] >> j) & 0x1) == 1) {
-                        this.setPixel(j, 7 - i, color);
+                        this.setPixel(j, 7 - i, BlkNo, color);
                     }
                 }
             }
         }
 
-        //% blockId="neopixel_set_strip_color" block="%strip|fill color %rgb" 
+        //% blockId="neopixel_set_strip_color" block="%strip|fill color %rgb"
         //% weight=85 blockGap=8
         //% parts="neopixel"
+        //% BlkNo.min=0 BlkNo.max= 5 
         showColor(rgb: number) {
-            this.update();
+            this.update(0);
+            this.setAllRGB(rgb);
+            this.show();
+        }
+
+        //% blockId="neopixel_set_strip_color_blk" block="%strip|fill color %rgb| Block %BlkNo"
+        //% weight=85 blockGap=8
+        //% parts="neopixel"
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=89
+        showColorBlk(rgb: number, BlkNo: number) {
+            this.update(BlkNo);
             this.setAllRGB(rgb);
             this.show();
         }
@@ -628,16 +437,32 @@ namespace Matrix {
         //% blockId="clear" block="%strip|clear"
         //% weight=76
         //% parts="neopixel"
+        //% BlkNo.min=0 BlkNo.max= 5 
         clear(): void {
-            this.update();
+            this.update(0);
+            this.show();
+        }
+        //% blockId="clearBlk" block="%strip|clear | Block %BlkNo"
+        //% weight=76
+        //% parts="neopixel"
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=87
+        clearBlk(BlkNo: number): void {
+            this.update(BlkNo);
             this.show();
         }
 
-        update(): void {
+        update(BlkNo: number): void {
             const stride = this._mode === 1 ? 4 : 3;
-            this.buf.fill(0, this.start * stride, this._length * stride);
+            this.buf.fill(0, BlkNo * 64 * stride, (BlkNo + 1) * 64 * stride);
         }
 
+        updateAll(): void {
+            let j = 0;
+            const stride = this._mode === 1 ? 4 : 3;
+            for (j = 0; j < this.NoBlk; j++) {
+                this.buf.fill(0, j * 64 * stride, (j + 1) * 64 * stride);
+            }
+        }
 
         //% weight=59
         //% parts="neopixel" 
@@ -702,23 +527,278 @@ namespace Matrix {
             }
             this.setBufferRGB(pixeloffset, red, green, blue)
         }
-    }
+        // blockGap=50
+        // blockId="showIcons" block="%strip| display Icon %index |Block %BlkNo"
+        // index.fieldEditor="gridpicker" index.fieldOptions.columns=4 advanced=true
+        showIcons(index: Pic, BlkNo: number): void {
+            screen = [0];
+            this.update(BlkNo);
+            switch (index) {
+                case Pic.smile:
+                    screen = [0x00, 0x42, 0xE7, 0x42, 0x00, 0x42, 0x3C, 0x00];
+                    this.display(0xFF00FF, BlkNo);
+                    break;
+                case Pic.eagleEye:
+                    screen = [0x81, 0xC3, 0xA5, 0xFF, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFFFF00, BlkNo)
+                    screen = [0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFFFFFF, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x3C];
+                    this.display(0x8a2be2, BlkNo);
+                    break;
+                case Pic.embarrassed:
+                    screen = [0x24, 0x24, 0x24, 0x42, 0x81, 0x00, 0x00, 0x00];
+                    this.display(0x8a2be2, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
+                    this.display(0x00ffff, BlkNo);
+                    break;
+                case Pic.sad:
+                    screen = [0x42, 0xA5, 0xA5, 0xA5, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0x8a2be2, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
+                    this.display(0x0000ff, BlkNo);
+                    break;
+                case Pic.scaleEys:
+                    screen = [0xF0, 0x90, 0x90, 0xF0, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0x0000FF, BlkNo);
+                    screen = [0x00, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0x4b0082, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x7E, 0x42];
+                    this.display(0xFFFF00, BlkNo);
+                    break;
+                case Pic.dumbfounded:
+                    screen = [0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFFFF00, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42, 0x00];
+                    this.display(0xFF0000, BlkNo);
+                    break;
+                case Pic.distress:
+                    screen = [0x20, 0x47, 0x80, 0x00, 0x00, 0x00, 0x3C, 0x42];
+                    this.display(0x4b0082, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFF00FF, BlkNo);
+                    break;
+                case Pic.spades:
+                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xFF, 0x5A, 0x18, 0x3C];
+                    this.display(0x8a2be2, BlkNo);
+                    break;
+                case Pic.square:
+                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xFF, 0x7E, 0x3C, 0x18];
+                    this.display(0xFF0000, BlkNo);
+                    break;
+                case Pic.glance:
+                    screen = [0x00, 0xE7, 0x63, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xaaaaaf, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x3C, 0x00];
+                    this.display(0x0000ff, BlkNo);
+                    break;
+                case Pic.blink:
+                    screen = [0x00, 0xE2, 0xE4, 0xE7, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xaaaaaf, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x3C, 0x00];
+                    this.display(0x00ffaa, BlkNo);
+                    break;
+                case Pic.anger:
+                    screen = [0x80, 0x42, 0x24, 0xE6, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFF0000, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
+                    this.display(0xaaaaaf, BlkNo);
+                    break;
+                case Pic.crossEyed:
+                    screen = [0x24, 0xE7, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFFA500, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x3C, 0x00];
+                    this.display(0xFF00FF, BlkNo);
+                    break;
+                case Pic.terrorist:
+                    screen = [0x81, 0x66, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
+                    this.display(0xFF0000, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xCD6839, BlkNo);
+                    break;
+                case Pic.dinosaurEgg:
+                    screen = [0x24, 0x66, 0xE7, 0xE7, 0x66, 0x24, 0x00, 0x00];
+                    this.display(0x8a2be2, BlkNo);
+                    screen = [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00];
+                    this.display(0x00FF00, BlkNo);
+                    screen = [0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x00, 0x00];
+                    this.display(0x4b0082, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x83, 0xFF];
+                    this.display(0xFFFFFF, BlkNo);
+                    break;
+                case Pic.whale:
+                    screen = [0x44, 0x28, 0x10, 0x00, 0x00, 0x30, 0x78, 0xFC];
+                    this.display(0xFFFFFF, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x30, 0x78, 0xCD, 0x87, 0x03];
+                    this.display(0x0000FF, BlkNo);
+                    break;
+                case Pic.grizzlies:
+                    screen = [0xC3, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFFFFFF, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x18, 0x3C, 0x3C, 0x99, 0x7E];
+                    this.display(0xCD6839, BlkNo);
+                    break;
+                case Pic.butterfly:
+                    screen = [0x66, 0x99, 0x81, 0x42, 0x24, 0x42, 0x42, 0x24];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.dog:
+                    screen = [0xC3, 0xC3, 0x7E, 0x5A, 0x7E, 0x7E, 0xC3, 0xFF];
+                    this.display(0xaaaaaf, BlkNo);
+                    break;
+                case Pic.owl:
+                    screen = [0x42, 0x66, 0x7E, 0xFF, 0xDB, 0xFF, 0x7E, 0x3C];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.rocket:
+                    screen = [0x18, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5];
+                    this.display(0xFF0000, BlkNo);
+                    screen = [0x00, 0x24, 0x24, 0x24, 0x24, 0x24, 0x00, 0x00];
+                    this.display(0xFFFFFF, BlkNo);
+                    screen = [0x00, 0x18, 0x18, 0x00, 0x00, 0x00, 0x5A, 0x00];
+                    this.display(0xFFFF00, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.comma:
+                    screen = [0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x00, 0x00, 0x00];
+                    this.display(0x0000FF, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0C, 0x18];
+                    this.display(0xaaaaaf, BlkNo);
+                    break;
+                case Pic.exclamation:
+                    screen = [0x18, 0x18, 0x18, 0x18, 0x18, 0x00, 0x18, 0x18];
+                    this.display(0x0000FF, BlkNo);
+                    break;
+                case Pic.lifting:
+                    screen = [0x00, 0x42, 0xC3, 0xC3, 0xC3, 0xC3, 0x42, 0x00];
+                    this.display(0x0000FF, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x3C, 0x3C, 0x00, 0x00, 0x00];
+                    this.display(0x4b0082, BlkNo);
+                    break;
+                case Pic.peach:
+                    screen = [0x00, 0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18];
+                    this.display(0xFF0000, BlkNo);
+                    break;
+                case Pic.doubt:
+                    screen = [0x3C, 0x7E, 0x66, 0x06, 0x0C, 0x18, 0x00, 0x18];
+                    this.display(0x0000FF, BlkNo);
+                    break;
+                case Pic.left:
+                    screen = [0x00, 0x20, 0x60, 0xFF, 0xFF, 0x60, 0x20, 0x00];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.right:
+                    screen = [0x00, 0x04, 0x06, 0xFF, 0xFF, 0x06, 0x04, 0x00];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.down:
+                    screen = [0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x3C, 0x18];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.up:
+                    screen = [0x18, 0x3C, 0x7E, 0x18, 0x18, 0x18, 0x18, 0x18];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.true:
+                    screen = [0x00, 0x00, 0x03, 0x06, 0xCC, 0x78, 0x30, 0x00];
+                    this.display(0xFF0000, BlkNo);
+                    break;
+                case Pic.key:
+                    screen = [0x38, 0x08, 0x38, 0x08, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFFFFFF, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x7E, 0x42, 0x42, 0x7E];
+                    this.display(0x0000FF, BlkNo);
+                    break;
+                case Pic.hanger:
+                    screen = [0x00, 0x00, 0x00, 0x18, 0x24, 0x42, 0x81, 0xFF];
+                    this.display(0x00FF00, BlkNo);
+                    screen = [0x18, 0x24, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFFA500, BlkNo);
+                    break;
+                case Pic.tv:
+                    screen = [0x81, 0x42, 0x24, 0x7E, 0x42, 0x42, 0x42, 0x7E];
+                    this.display(0x0000FF, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x3C, 0x3C, 0x3C, 0x00];
+                    this.display(0x00ff00, BlkNo);
+                    break;
+                case Pic.sailing:
+                    screen = [0x10, 0x10, 0x10, 0x10, 0x10, 0xFF, 0x7E, 0x3C];
+                    this.display(0x4b0082, BlkNo);
+                    screen = [0x00, 0x08, 0x0C, 0x08, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0xFF0000, BlkNo);
+                    break;
+                case Pic.squirrel:
+                    screen = [0x00, 0x00, 0x00, 0x24, 0x00, 0x18, 0x3C, 0x7E];
+                    this.display(0xFFFFFF, BlkNo);
+                    screen = [0x24, 0x24, 0x3C, 0x5A, 0xFF, 0xE7, 0xC3, 0x00];
+                    this.display(0xFFA500, BlkNo);
+                    break;
+                case Pic.et:
+                    screen = [0x3C, 0xFF, 0x99, 0xFF, 0x7E, 0x3C, 0x5A, 0x81];
+                    this.display(0xFF00FF, BlkNo);
+                    break;
+                case Pic.alien:
+                    screen = [0x81, 0x42, 0x3C, 0xFF, 0x99, 0xFF, 0x7E, 0x3C];
+                    this.display(0x4b0082, BlkNo);
+                    break;
+                case Pic.mushroom:
+                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xC9, 0xDB, 0x00, 0x00];
+                    this.display(0xFFA500, BlkNo);
+                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x66];
+                    this.display(0x00FF00, BlkNo);
+                    break;
+                case Pic.longEars:
+                    screen = [0xE7, 0x3C, 0x7E, 0x5A, 0xFF, 0xBD, 0x3C, 0x7E];
+                    this.display(0xFFA500, BlkNo);
+                    break;
+                case Pic.surprised:
+                    screen = [0x24, 0x7E, 0x5A, 0xFF, 0xFF, 0x66, 0x66, 0x24];
+                    this.display(0x0000FF, BlkNo);
+                    break;
+                case Pic.home:
+                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0x00, 0x00, 0x00, 0x00];
+                    this.display(0x0000FF, BlkNo);
+                    screen = [0x02, 0x02, 0x00, 0x00, 0x5E, 0x7E, 0x7A, 0x7A];
+                    this.display(0xaaaaaf, BlkNo);
+                    break;
+                case Pic.false:
+                    screen = [0x00, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x00];
+                    this.display(0x0000FF, BlkNo);
+                    break;
+            }
+        }
 
-    //% blockId="neopixel_create" block="Create Matrix %SerialPinTx"
-    //% weight=90 blockGap=8
-    export function create(SerialPinTx: DigitalPin): Strip {
+
+
+    }
+    /**
+     * Functions to create NeoPixel strips.
+     * @param NoBlk is number of block in the matrix, eg:1
+    */
+    //% blockId="neopixel_Mcreate" block="create Matrix Pin %SerialPinTx| Number of Block %NoBlk"
+    //% weight=90 blockGap=8 
+    //% NoBlk.min=1 NoBlk.max= 6 advanced=true
+    export function create(SerialPinTx: DigitalPin, NoBlk: number): Strip {
         let strip = new Strip();
         let mode = 0;
-        let numleds = 64;
+        let numleds = 64 * NoBlk;
         let stride = mode === 1 ? 4 : 3;
         strip.buf = pins.createBuffer(numleds * stride);
         strip.start = 0;
         strip._length = numleds;
         strip._mode = mode;
         strip._matrixWidth = 0;
-        strip.setBrightness(255)
+        strip.setBrightness(30)
         strip.setPin(SerialPinTx)
+        strip.NoBlk = NoBlk
         return strip;
+    }
+
+    //% weight=90
+    //% blockId="neopixel_Screate" block="create Matrix Pin %SerialPinTx"
+    export function SCreate(SerialPinTx: DigitalPin): Strip {
+        return create(SerialPinTx, 1);
     }
 
     //% weight=1
@@ -748,4 +828,34 @@ namespace Matrix {
         let b = (rgb) & 0xFF;
         return b;
     }
+
+    function hex2dec(s: string): number {
+        let digits = "0123456789ABCDEFabcdef";
+        let val = 0;
+        let i = 0;
+        let j = 0;
+        let d = 0;
+        for (i = 0; i < s.length; i++) {
+            let c = s.charAt(i);
+            for (j = 0; j < 22; j++) {
+                if (c == digits.charAt(j)) {
+                    d = j;
+                    break;
+                }
+            }
+            if (d > 15) {
+                d = d - 6;
+            }
+            val = 16 * val + d;
+        }
+        return val;
+    }
+
+    function flipnrot(s: string): number {
+        let digits = "084C2A6E195D3B7F";
+        return s.compare(digits)
+    }
+
+
+
 }
