@@ -11,7 +11,7 @@ Micro:bit RGB Matrix expansion board.
 
 ## Summary
  
-RGB matrix module, support single bus control, only a pin can control all the LED, and module supports cascade control, multiple modules can control at the same time, do not take up pin resources.The module adopts the LED special master chip WS2812, each LED has a separate address bit, which can be controlled separately, and each RGB pixel can realize 256 level brightness display. This Module is from DFRobotics with upgrades. Som of the Block picture is no valid due to the updates.
+RGB matrix module, support single bus control, only a pin can control all the LED, and module supports cascade control, multiple modules can control at the same time, do not take up pin resources.The module adopts the LED special master chip WS2812, each LED has a separate address bit, which can be controlled separately, and each RGB pixel can realize 256 level brightness display. This Module is from DFRobotics with upgrades. Some of the Block picture is not valid due to the updates.
 
 
 ## Blocks
