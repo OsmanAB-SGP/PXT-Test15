@@ -154,11 +154,12 @@ namespace Matrix {
     /**
      * A NeoPixel strip
      */
-    let chrs: string[] = ['0', ' ', '?', '@', '$', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-    let chrsNo: number = 66; // number of chrs
+    let chrs: string[] = ['0', ' ', '!', '?', '@', '$', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+    let chrsNo: number = 67; // number of chrs
 
     let chr: number[] = [0x3C, 0x66, 0x42, 0x42, 0x42, 0x66, 0x3C, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x18, 0x3C, 0x3C, 0x18, 0x18, 0x00, 0x18, 0x00,
         0x3c, 0x66, 0x66, 0x0c, 0x18, 0x00, 0x18, 0x00,
         0x3c, 0x66, 0x5e, 0x56, 0x5c, 0x40, 0x7c, 0x00,
         0x3c, 0x5a, 0x58, 0x3c, 0x1a, 0x5a, 0x3C, 0x00,
@@ -298,15 +299,27 @@ namespace Matrix {
             }
         }
 
-        //% blockId="showCustomNew" block="%strip| display New Custom Icon string %str| Block %BlkNo| color %color"
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=75
-        showCustomNew(str: string, BlkNo: number, color: number): void {
+        // blockId="showCustomNew" block="%strip| display New Custom Icon string %str| Block %BlkNo| color %color"
+        // BlkNo.min=0 BlkNo.max= 5 advanced=true weight=75
+        showCustomNew0(str: string, BlkNo: number, color: number): void {
             screen = [0];
             this.update(BlkNo);
             screen = [hex2dec(str.substr(0, 2)), hex2dec(str.substr(2, 2)), hex2dec(str.substr(4, 2)), hex2dec(str.substr(6, 2)), hex2dec(str.substr(8, 2)), hex2dec(str.substr(10, 2)), hex2dec(str.substr(12, 2)), hex2dec(str.substr(14, 2))];
             this.display(color, BlkNo);
             serial.writeString(str);
         }
+
+        //% blockId="showCustomNew" block="%strip| display New Custom Icon string %str| Block %BlkNo| color %color"
+        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=72
+        showCustomNew(str: string, BlkNo: number, color: number): void {
+            screen = [0];
+            this.update(BlkNo);
+            screen = [m2l(hex2dec(str.substr(14, 2))), m2l(hex2dec(str.substr(12, 2))), m2l(hex2dec(str.substr(10, 2))), m2l(hex2dec(str.substr(8, 2))), m2l(hex2dec(str.substr(6, 2))), m2l(hex2dec(str.substr(4, 2))), m2l(hex2dec(str.substr(2, 2))), m2l(hex2dec(str.substr(0, 2)))];
+            serial.writeNumbers(screen);
+            this.display(color, BlkNo);
+
+        }
+
 
         //% blockId="showCustomUpdate" block="%strip| display Update Custom Icon string %str| Block %BlkNo| color %color"
         //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=70
@@ -855,7 +868,18 @@ namespace Matrix {
         let digits = "084C2A6E195D3B7F";
         return s.compare(digits)
     }
+    export function m2l(n: number): number {
+        let i = 0;
+        let j = 7;
+        let ret = 0;
+        for (i = 0; i < 8; i++) {
+            if (((n >> i) & 0x1) == 1) {
+                ret = ret + 2 ** j;
+            }        // Add code here
+            j = j - 1;
+        }
+        return ret;
+    }
 
 
-
-}
+} 
