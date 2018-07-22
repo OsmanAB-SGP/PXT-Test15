@@ -1,5 +1,5 @@
 /**
- * Version 1.3.
+ * Version 1.4
  * 
  */
 
@@ -276,6 +276,11 @@ namespace Matrix {
             this.show()
         }
 
+        setPixel2(x: number, y: number, BlkNo: number, color: number): void {
+            let offset = (y * 8 + x) + (BlkNo * 64)
+            this.setPixelColor(offset, color)
+        }
+
         display(color: number, BlkNo: number): void {
             let i = 0;
             let j = 0;
@@ -283,10 +288,11 @@ namespace Matrix {
             for (k = 0; k < 8; k++) {
                 for (i = 0; i < 8; i++) {
                     if (((screen[k] >> i) & 0x1) == 1) {
-                        this.setPixel(7 - i, k, BlkNo, color);
+                        this.setPixel2(7 - i, k, BlkNo, color);
                     }
                 }
             }
+            this.show()
         }
 
         displayAll(color: number): void {
@@ -320,7 +326,7 @@ namespace Matrix {
             screen = [0];
             this.update(BlkNo);
             screen = [m2l(hex2dec(str.substr(14, 2))), m2l(hex2dec(str.substr(12, 2))), m2l(hex2dec(str.substr(10, 2))), m2l(hex2dec(str.substr(8, 2))), m2l(hex2dec(str.substr(6, 2))), m2l(hex2dec(str.substr(4, 2))), m2l(hex2dec(str.substr(2, 2))), m2l(hex2dec(str.substr(0, 2)))];
-            serial.writeNumbers(screen);
+            //    serial.writeNumbers(screen);
             this.display(color, BlkNo);
 
         }
@@ -331,7 +337,7 @@ namespace Matrix {
         showCustomUpdate(str: string, BlkNo: number, color: number): void {
             screen = [m2l(hex2dec(str.substr(14, 2))), m2l(hex2dec(str.substr(12, 2))), m2l(hex2dec(str.substr(10, 2))), m2l(hex2dec(str.substr(8, 2))), m2l(hex2dec(str.substr(6, 2))), m2l(hex2dec(str.substr(4, 2))), m2l(hex2dec(str.substr(2, 2))), m2l(hex2dec(str.substr(0, 2)))];
             this.display(color, BlkNo);
-            serial.writeString(str);
+            //    serial.writeString(str);
         }
 
 
@@ -439,9 +445,11 @@ namespace Matrix {
         //% parts="neopixel"
         //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=89
         showColorBlk(rgb: number, BlkNo: number) {
-            this.update(BlkNo);
-            this.setAllRGB(rgb);
-            this.show();
+            //    this.update(BlkNo);
+            //    this.setAllRGB(rgb);
+            //    this.show();
+            this.showCustomNew("FFFFFFFFFFFFFFFF", BlkNo, rgb)
+
         }
 
         setPixelColor(pixeloffset: number, rgb: number): void {
@@ -887,4 +895,4 @@ namespace Matrix {
     }
 
 
-} 
+}
