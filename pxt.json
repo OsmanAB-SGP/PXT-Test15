@@ -1,13 +1,12 @@
 {
-    "name": "matrix",
-    "version": "0.0.0",
-    "description": "This library is DFRobot matrix 8*8.",
+    "name": "Test",
+    "version": "0.0.1",
+    "description": "This library is for obliq.",
     "license": "MIT",
     "dependencies": {
         "core": "*",
         "radio": "*",
-        "ws2812b": "github:Microsoft/pxt-ws2812b#v0.0.4"
-    },
+      },
     "files": [
         "README.md",
         "main.ts",
