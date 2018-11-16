@@ -1,899 +1,1399 @@
-/**
- * Version 1.5
- * updated fill block and improve new custome
- * 
+/*！
+ * @file Obloq/Obloq.ts
+ * @brief DFRobot's obloq makecode library.
+ * @n [Get the module here](http://www.dfrobot.com.cn/goods-1577.html)
+ * @n Obloq is a serial port of WIFI connection module, Obloq can connect 
+ *    to Microsoft Azure IoT and other standard MQTT protocol IoT.
+ *
+ * @copyright	[DFRobot](http://www.dfrobot.com), 2016
+ * @copyright	GNU Lesser General Public License
+ *
+ * @author [email](xin.li@dfrobot.com)
+ * @version  V1.0
+ * @date  2018-03-20
  */
 
-enum NeoPixelColors {
-    //% block=red
-    Red = 0xFF0000,
-    //% block=orange
-    Orange = 0xFFA500,
-    //% block=yellow
-    Yellow = 0xFFFF00,
-    //% block=green
-    Green = 0x00FF00,
-    //% block=blue
-    Blue = 0x0000FF,
-    //% block=indigo
-    Indigo = 0x4b0082,
-    //% block=violet
-    Violet = 0x8a2be2,
-    //% block=purple
-    Purple = 0xFF00FF,
-    //% block=white
-    White = 0xFFFFFF,
-    //% block=black
-    Black = 0x000000
+
+//debug
+const OBLOQ_DEBUG = false
+const OBLOQ_MQTT_DEFAULT_SERVER = true
+//DFRobot easy iot
+const OBLOQ_MQTT_EASY_IOT_SERVER_CHINA = "iot.dfrobot.com.cn"
+const OBLOQ_MQTT_EASY_IOT_SERVER_GLOBAL = "iot.dfrobot.com"
+const OBLOQ_MQTT_EASY_IOT_SERVER_LOCAL = "192.168.1.98"
+const OBLOQ_MQTT_EASY_IOT_PORT = 1883
+//other iot
+const OBLOQ_MQTT_USER_IOT_SERVER = "---.-----.---"
+const OBLOQ_MQTT_USER_IOT_PORT = 0
+//topic max number
+const OBLOQ_MQTT_TOPIC_NUM_MAX = 5
+//wrong type
+const OBLOQ_ERROR_TYPE_IS_SUCCE = 0
+const OBLOQ_ERROR_TYPE_IS_ERR = 1
+const OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_TIMEOUT = -1
+const OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_FAILURE = -2
+const OBLOQ_ERROR_TYPE_IS_MQTT_SUBTOPIC_TIMEOUT = -3
+const OBLOQ_ERROR_TYPE_IS_MQTT_CONNECT_TIMEOUT = -4
+const OBLOQ_ERROR_TYPE_IS_MQTT_CONNECT_FAILURE = -5
+const OBLOQ_ERROR_TYPE_IS_MQTT_SUBTOPIC_FAILURE = -6
+//data type
+const OBLOQ_STR_TYPE_IS_NONE = ""
+const OBLOQ_BOOL_TYPE_IS_TRUE = true
+const OBLOQ_BOOL_TYPE_IS_FALSE = false
+//topics name
+enum TOPIC {
+    topic_1 = 1,
+    topic_2 = 2,
+    topic_3 = 3,
+    topic_4 = 4
 }
-
-enum SerialPinTx {
-    //% block=P0
-    P0 = DigitalPin.P0,
-    //% block=P1
-    P1 = DigitalPin.P1,
-    P2 = DigitalPin.P2,
-    P8 = DigitalPin.P8,
-    P12 = DigitalPin.P12,
-    P13 = DigitalPin.P13,
-    P14 = DigitalPin.P14,
-    P15 = DigitalPin.P15,
-    P16 = DigitalPin.P16
-};
-
-enum Pic {
-    //% block=smile
-    smile = 0,
-    //% block=eagleEye
-    eagleEye = 1,
-    //% block=embarrassed
-    embarrassed = 2,
-    //% block=sad
-    sad = 3,
-    //% block=scaleEys
-    scaleEys = 4,
-    //% block=dumbfounded
-    dumbfounded = 5,
-    //% block=distress
-    distress,
-    //% block=spades
-    spades,
-    //% block=square
-    square,
-    //% block=glance
-    glance,
-    //% block=blink
-    blink,
-    //% block=anger
-    anger,
-    //% block=crossEyed
-    crossEyed,
-    //% block=terrorist
-    terrorist,
-    //% block=dinosaurEgg
-    dinosaurEgg,
-    //% block=whale
-    whale,
-    //% block=grizzlies
-    grizzlies,
-    //% block=butterfly
-    butterfly,
-    //% block=dog
-    dog,
-    //% block=owl
-    owl,
-    //% block=rocket
-    rocket,
-    //% block=comma
-    comma,
-    //% block=exclamation
-    exclamation,
-    //% block=lifting
-    lifting,
-    //% block=peach
-    peach,
-    //% block=doubt
-    doubt,
-    //% block=left
-    left,
-    //% block=left
-    right,
-    //% block=down
-    down,
-    //% block=up
-    up,
-    //% block=true
-    true,
-    //% block=key
-    key,
-    //% block=hanger
-    hanger,
-    //% block=tv
-    tv,
-    //% block=sailing
-    sailing,
-    //% block=squirrel
-    squirrel,
-    //% block=et
-    et,
-    //% block=alien
-    alien,
-    //% block=mushroom
-    mushroom,
-    //% block=longEars
-    longEars,
-    //% block=surprised
-    surprised,
-    //% block=home
-    home,
-    //% block=false
-    false
-
-}
-
-enum _Dir {
-    //% block=east
-    east = 0,
-    //% block=southeast
-    southeast = 1,
-    //% block=south
-    south = 2,
-    //% block=southwest
-    southwest = 3,
-    //% block=west
-    west = 4,
-    //% block=northwest
-    northwest = 5,
-    //% block=north
-    north = 6,
-    //% block=northeast
-    northeast = 7
-}
-
-
 
 /**
- * Functions to operate NeoPixel strips.
+ *Obloq implementation method.
  */
-//% color=#0078D7 icon="\uf00a"
-namespace Matrix {
-    /**
-     * A NeoPixel strip
-     */
-    let chrs: string[] = ['0', ' ', '!', '?', '@', '$', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-    let chrsNo: number = 67; // number of chrs
+//% weight=10 color=#008B00 icon="\uf1eb" block="Obloq"
+namespace Obloq {
 
-    let chr: number[] = [0x3C, 0x66, 0x42, 0x42, 0x42, 0x66, 0x3C, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x18, 0x3C, 0x3C, 0x18, 0x18, 0x00, 0x18, 0x00,
-        0x3c, 0x66, 0x66, 0x0c, 0x18, 0x00, 0x18, 0x00,
-        0x3c, 0x66, 0x5e, 0x56, 0x5c, 0x40, 0x7c, 0x00,
-        0x3c, 0x5a, 0x58, 0x3c, 0x1a, 0x5a, 0x3C, 0x00,
-        0x10, 0x70, 0x10, 0x10, 0x10, 0x10, 0x7C, 0x00,
-        0x3C, 0x42, 0x02, 0x04, 0x18, 0x22, 0x7E, 0x00,
-        0x3C, 0x42, 0x02, 0x1C, 0x02, 0x42, 0x3C, 0x00,
-        0x0C, 0x14, 0x24, 0x44, 0x7E, 0x04, 0x0C, 0x00,
-        0x7E, 0x40, 0x7C, 0x02, 0x02, 0x42, 0x3C, 0x00,
-        0x3C, 0x20, 0x40, 0x7C, 0x42, 0x42, 0x3C, 0x00,
-        0x7E, 0x44, 0x08, 0x10, 0x10, 0x10, 0x10, 0x00,
-        0x3C, 0x42, 0x42, 0x3C, 0x42, 0x42, 0x3C, 0x00,
-        0x38, 0x46, 0x42, 0x3E, 0x02, 0x04, 0x3C, 0x00,
-        0x10, 0x18, 0x28, 0x24, 0x7C, 0x42, 0xE7, 0x00,
-        0xFC, 0x44, 0x78, 0x46, 0x42, 0x42, 0xFC, 0x00,
-        0x3E, 0x42, 0x80, 0x80, 0x80, 0x42, 0x3C, 0x00,
-        0xF8, 0x46, 0x42, 0x42, 0x42, 0x44, 0xF8, 0x00,
-        0xFC, 0x42, 0x40, 0x78, 0x40, 0x46, 0xFC, 0x00,
-        0xFC, 0x42, 0x48, 0x78, 0x48, 0x40, 0xE0, 0x00,
-        0x3C, 0xC4, 0x80, 0x80, 0x8E, 0x44, 0x78, 0x00,
-        0xE7, 0x42, 0x42, 0x7E, 0x42, 0x42, 0xE7, 0x00,
-        0x7C, 0x10, 0x10, 0x10, 0x10, 0x10, 0x7C, 0x00,
-        0x3E, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0xF0,
-        0xFE, 0x48, 0x70, 0x70, 0x48, 0x44, 0xEE, 0x00,
-        0xE0, 0x40, 0x40, 0x40, 0x40, 0x42, 0xFE, 0x00,
-        0xEE, 0x6C, 0x6C, 0x54, 0x54, 0x54, 0xC6, 0x00,
-        0xC7, 0x62, 0x52, 0x4A, 0x4A, 0x46, 0xE2, 0x00,
-        0x3C, 0x46, 0x82, 0x82, 0x82, 0x44, 0x38, 0x00,
-        0xFC, 0x42, 0x42, 0x7C, 0x40, 0x40, 0xE0, 0x00,
-        0x78, 0xC6, 0x82, 0x82, 0xB2, 0xCE, 0x38, 0x06,
-        0xFE, 0x42, 0x7C, 0x48, 0x44, 0x46, 0xE3, 0x00,
-        0x3E, 0x42, 0x60, 0x18, 0x06, 0x42, 0x7C, 0x00,
-        0xFE, 0x92, 0x10, 0x10, 0x10, 0x10, 0x38, 0x00,
-        0xE7, 0x42, 0x42, 0x42, 0x42, 0x42, 0x3C, 0x00,
-        0xE7, 0x42, 0x64, 0x24, 0x28, 0x18, 0x10, 0x00,
-        0xD6, 0x92, 0x92, 0xAA, 0xAE, 0x44, 0x44, 0x00,
-        0xE7, 0x66, 0x24, 0x18, 0x34, 0x26, 0xE7, 0x00,
-        0xEE, 0x44, 0x28, 0x10, 0x10, 0x10, 0x38, 0x00,
-        0x7E, 0x84, 0x08, 0x10, 0x20, 0x42, 0xFC, 0x00,
-        0x00, 0x00, 0x3C, 0x42, 0x3E, 0x42, 0x3F, 0x00,
-        0xC0, 0x40, 0x5C, 0x62, 0x42, 0x42, 0x7C, 0x00,
-        0x00, 0x00, 0x3C, 0x62, 0x40, 0x42, 0x3C, 0x00,
-        0x06, 0x02, 0x1E, 0x62, 0x42, 0x42, 0x3F, 0x00,
-        0x00, 0x00, 0x3C, 0x42, 0x7E, 0x40, 0x3E, 0x00,
-        0x0F, 0x10, 0x7E, 0x10, 0x10, 0x10, 0x7C, 0x00,
-        0x00, 0x00, 0x3E, 0x44, 0x38, 0x60, 0x5E, 0x7E,
-        0xC0, 0x40, 0x5C, 0x62, 0x42, 0x42, 0xE7, 0x00,
-        0x30, 0x00, 0x70, 0x10, 0x10, 0x10, 0x7C, 0x00,
-        0x0C, 0x00, 0x1C, 0x04, 0x04, 0x04, 0x04, 0x78,
-        0xC0, 0x40, 0x4E, 0x58, 0x70, 0x48, 0xEE, 0x00,
-        0x70, 0x10, 0x10, 0x10, 0x10, 0x10, 0x7C, 0x00,
-        0x00, 0x00, 0xFF, 0x49, 0x49, 0x49, 0xED, 0x00,
-        0x00, 0x00, 0xD8, 0x66, 0x42, 0x42, 0xE7, 0x00,
-        0x00, 0x00, 0x3C, 0x42, 0x42, 0x42, 0x3C, 0x00,
-        0x00, 0x00, 0xF8, 0x46, 0x42, 0x42, 0x7C, 0xE0,
-        0x00, 0x00, 0x3E, 0x42, 0x42, 0x42, 0x3E, 0x07,
-        0x00, 0x00, 0xEE, 0x30, 0x20, 0x20, 0xF8, 0x00,
-        0x00, 0x00, 0x3E, 0x40, 0x3C, 0x42, 0x7C, 0x00,
-        0x10, 0x10, 0x7C, 0x10, 0x10, 0x10, 0x0C, 0x00,
-        0x00, 0x00, 0xC6, 0x42, 0x42, 0x42, 0x3F, 0x00,
-        0x00, 0x00, 0xE7, 0x46, 0x24, 0x28, 0x10, 0x00,
-        0x00, 0x00, 0xD7, 0x92, 0xAA, 0x6A, 0x44, 0x00,
-        0x00, 0x00, 0x6E, 0x3C, 0x18, 0x3C, 0x76, 0x00,
-        0x00, 0x00, 0xE7, 0x66, 0x3C, 0x18, 0x10, 0xE0,
-        0x00, 0x00, 0x7E, 0x44, 0x18, 0x32, 0x7E, 0x00];
-
-    let dirs: number[] = [
-        // 0x00,0x04,0x06,0xFF,0xFF,0x06,0x04,0x00, //->       
-        // 0xC0,0xE0,0x70,0x39,0x1D,0x0F,0x07,0x1F,
-        // 0x18,0x18,0x18,0x18,0x18,0x7E,0x3C,0x18, //|
-        // 0x03,0x07,0x0E,0x9C,0xB8,0xF0,0xE0,0xF8,
-        // 0x00,0x20,0x60,0xFF,0xFF,0x60,0x20,0x00, //<-
-        // 0xF8,0xE0,0xF0,0xB8,0x9C,0x0E,0x07,0x03,
-        // 0x18,0x3C,0x7E,0x18,0x18,0x18,0x18,0x18, //^
-        // 0x1F, 0x07, 0x0F, 0x1D, 0x39, 0x70, 0xE0, 0xC0
-        0x00, 0x20, 0x60, 0xFF, 0xFF, 0x60, 0x20, 0x00,
-        0xF8, 0xE0, 0xF0, 0xB8, 0x9C, 0x0E, 0x07, 0x03,
-        0x18, 0x3C, 0x7E, 0x18, 0x18, 0x18, 0x18, 0x18,
-        0x1F, 0x07, 0x0F, 0x1D, 0x39, 0x70, 0xE0, 0xC0,
-        0x00, 0x04, 0x06, 0xFF, 0xFF, 0x06, 0x04, 0x00,
-        0xC0, 0xE0, 0x70, 0x39, 0x1D, 0x0F, 0x07, 0x1F,
-        0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x3C, 0x18,
-        0x03, 0x07, 0x0E, 0x9C, 0xB8, 0xF0, 0xE0, 0xF8,
-    ]
+    //serial
+    let OBLOQ_SERIAL_INIT = OBLOQ_BOOL_TYPE_IS_FALSE
+    let OBLOQ_SERIAL_TX = SerialPin.P2
+    let OBLOQ_SERIAL_RX = SerialPin.P1
+    //wifi
+    let OBLOQ_WIFI_SSID = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_WIFI_PASSWORD = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_WIFI_IP = "0.0.0.0"
+    //mqtt
+    let OBLOQ_MQTT_PORT = 0
+    let OBLOQ_MQTT_SERVER = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_MQTT_PWD = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_MQTT_ID = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_MQTT_TOPIC = [["x", "false"], ["x", "false"], ["x", "false"], ["x", "false"], ["x", "false"]]
+    //http
+    let OBLOQ_HTTP_IP = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_HTTP_PORT = 8080
+    let OBLOQ_HTTP_BUSY = OBLOQ_BOOL_TYPE_IS_FALSE
+    //state
+    let OBLOQ_WIFI_CONNECTED = OBLOQ_BOOL_TYPE_IS_FALSE
+    let OBLOQ_WIFI_CONNECT_FIRST = OBLOQ_BOOL_TYPE_IS_TRUE
+    let OBLOQ_MQTT_INIT = OBLOQ_BOOL_TYPE_IS_FALSE
+    let OBLOQ_HTTP_INIT = OBLOQ_BOOL_TYPE_IS_FALSE
+    //callback
+    let OBLOQ_MQTT_CB: Action[] = [null, null, null, null, null]
+    //commands
+    let OBLOQ_ANSWER_CMD = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+    let OBLOQ_WRONG_TYPE = OBLOQ_STR_TYPE_IS_NONE
+    //animation
+    let OBLOQ_WIFI_ICON = 1
+    let OBLOQ_MQTT_ICON = 1
+    //event
+    let OBLOQ_MQTT_EVENT = OBLOQ_BOOL_TYPE_IS_FALSE
+    //mode
+    let OBLOQ_WORKING_MODE_IS_MQTT = OBLOQ_BOOL_TYPE_IS_FALSE
+    let OBLOQ_WORKING_MODE_IS_HTTP = OBLOQ_BOOL_TYPE_IS_FALSE
+    let OBLOQ_WORKING_MODE_IS_STOP = OBLOQ_BOOL_TYPE_IS_TRUE
 
 
-    let queue: number[] = [0];
-    let screen: number[] = [0];
-    let NoBlk: number = 1;
+    export enum SERVERS {
+        //% blockId=SERVERS_China block="China"
+        China,
+        //% blockId=SERVERS_Global block="Global"
+        Global,
+        //% blockId=SERVERS_Global block="Local"
+        Local
 
-    export class Strip {
-        buf: Buffer;
-        pin: DigitalPin;
-        // TODO: encode as bytes instead of 32bit
-        brightness: number;
-        start: number; // start offset in LED strip
-        _length: number; // number of LEDs
-        _mode: number;
-        _matrixWidth: number; // number of leds in a matrix - if any
-        len: number;
-        NoBlk: number; // No of Matrix block
+		}
 
-        //% blockId="showPixel" block="%strip| display pixel x %x| y %y| Block %BlkNo| color %color"
-        //% x.min=0 x.max=7
-        //% y.min=0 y.max=7
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=85
-        setPixel(x: number, y: number, BlkNo: number, color: number): void {
-            let offset = (y * 8 + x) + (BlkNo * 64)
-            this.setPixelColor(offset, color)
-            this.show()
-        }
-
-        setPixel2(x: number, y: number, BlkNo: number, color: number): void {
-            let offset = (y * 8 + x) + (BlkNo * 64)
-            this.setPixelColor(offset, color)
-        }
-
-        display(color: number, BlkNo: number): void {
-            let i = 0;
-            let j = 0;
-            let k = 0;
-            for (k = 0; k < 8; k++) {
-                for (i = 0; i < 8; i++) {
-                    if (((screen[k] >> i) & 0x1) == 1) {
-                        this.setPixel2(7 - i, k, BlkNo, color);
-                    }
-                }
-            }
-            this.show()
-        }
-
-        displayAll(color: number): void {
-            let i = 0;
-            let j = 0;
-            let k = 0;
-            for (j = 0; j < this.NoBlk; j++) {
-                for (k = 0; k < 8; k++) {
-                    for (i = 0; i < 8; i++) {
-                        if (((screen[k + (j * 8)] >> i) & 0x1) == 1) {
-                            this.setPixel(7 - i, k, j, color);
-                        }
-                    }
-                }
-            }
-        }
-
-        // blockId="showCustomNew" block="%strip| display New Custom Icon string %str| Block %BlkNo| color %color"
-        // BlkNo.min=0 BlkNo.max= 5 advanced=true weight=75
-        showCustomNew0(str: string, BlkNo: number, color: number): void {
-            screen = [0];
-            this.update(BlkNo);
-            screen = [hex2dec(str.substr(0, 2)), hex2dec(str.substr(2, 2)), hex2dec(str.substr(4, 2)), hex2dec(str.substr(6, 2)), hex2dec(str.substr(8, 2)), hex2dec(str.substr(10, 2)), hex2dec(str.substr(12, 2)), hex2dec(str.substr(14, 2))];
-            this.display(color, BlkNo);
-            serial.writeString(str);
-        }
-
-        //% blockId="showCustomNew" block="%strip| display New Custom Icon string %str| Block %BlkNo| color %color"
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=72
-        showCustomNew(str: string, BlkNo: number, color: number): void {
-            screen = [0];
-            this.update(BlkNo);
-            screen = [m2l(hex2dec(str.substr(14, 2))), m2l(hex2dec(str.substr(12, 2))), m2l(hex2dec(str.substr(10, 2))), m2l(hex2dec(str.substr(8, 2))), m2l(hex2dec(str.substr(6, 2))), m2l(hex2dec(str.substr(4, 2))), m2l(hex2dec(str.substr(2, 2))), m2l(hex2dec(str.substr(0, 2)))];
-            //    serial.writeNumbers(screen);
-            this.display(color, BlkNo);
-
-        }
-
-
-        //% blockId="showCustomUpdate" block="%strip| display Update Custom Icon string %str| Block %BlkNo| color %color"
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=70
-        showCustomUpdate(str: string, BlkNo: number, color: number): void {
-            screen = [m2l(hex2dec(str.substr(14, 2))), m2l(hex2dec(str.substr(12, 2))), m2l(hex2dec(str.substr(10, 2))), m2l(hex2dec(str.substr(8, 2))), m2l(hex2dec(str.substr(6, 2))), m2l(hex2dec(str.substr(4, 2))), m2l(hex2dec(str.substr(2, 2))), m2l(hex2dec(str.substr(0, 2)))];
-            this.display(color, BlkNo);
-            //    serial.writeString(str);
-        }
-
-
-        setChar(color: number): void {
-            let i = 0;
-            let j = 0;
-            let k = 0;
-            // basic.showNumber(this.NoBlk);
-            for (i = 0; i < (8 * this.NoBlk); i++) {
-                screen[i] = queue[i];
-            }
-            this.displayAll(color);
-            basic.pause(100);
-
-            if (this.len > (this.NoBlk + 1)) {
-                while (k++ < (this.len + this.NoBlk)) {
-                    for (i = 0; i < 8; i++) {
-                        // this.clear();
-
-                        for (j = 0; j < 8 * this.NoBlk; j++) {
-                            screen[j] = (screen[j] << 1) | ((queue[k * 8 + j] & (0x1 << (7 - i))) >> (7 - i));
-                        }
-                        this.updateAll();
-                        this.displayAll(color);
-                        basic.pause(100);
-                    }
-                    this.updateAll();
-                    this.show();
-                }
-            }
-            queue = [0];
-        }
-
-        //% blockId="clearPixel" block="%strip| clear pixel x %x| y %y | Block %BlkNo"
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=80
-        clearPixel(x: number, y: number, BlkNo: number): void {
-            this.setPixel(x, y, BlkNo, NeoPixelColors.Black);
-        }
-
-        //% blockId="showNumber" block="%strip| show number %num| color %color"
-        //% parts="neopixel"
-        showNumber(num: number, color: number): void {
-            this.updateAll();
-            this.showString(num.toString(), color);
-        }
-
-        //% blockId="showString" block="%strip| display string %str| color %color"
-        showString(str: string, color: number): void {
-            let l = str.length;
-            this.len = l + 1;
-            let i = 0;
-            let index = 0;
-            let j = 0;
-            let k = 0;
-            let sub = 0;
-            this.updateAll();
-            this.show();
-            for (i = 0; i < l; i++) {
-                for (j = 0; j < chrsNo; j++) {
-                    if (str[i] == chrs[j]) {
-                        index = j;
-                        break;
-                    }
-                }
-                for (k = 0; k < 8; k++) {
-                    queue[sub++] = chr[index * 8 + k];
-                }
-            }
-            for (i = 0; i < 8 * this.NoBlk; i++) {
-                queue[sub++] = 0;
-            }
-            //            serial.writeNumber(this.len);
-            this.setChar(color);
-        }
-
-        //% blockId="showCompass" block="%strip| display dir %dir| Block %BlkNo | color %color"
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true
-        showCompass(dir: _Dir, BlkNo: number, color: number): void {
-            let i = 0;
-            let j = 0;
-            let index = 0;
-            index = dir * 8;
-            this.update(BlkNo);
-            for (i = 0; i < 8; i++) {
-                for (j = 0; j < 8; j++) {
-                    if (((dirs[index + i] >> j) & 0x1) == 1) {
-                        this.setPixel(j, 7 - i, BlkNo, color);
-                    }
-                }
-            }
-        }
-
-        //% blockId="neopixel_set_strip_color" block="%strip|fill color %rgb"
-        //% weight=85 blockGap=8
-        //% parts="neopixel"
-        //% BlkNo.min=0 BlkNo.max= 5 
-        showColor(rgb: number) {
-            this.update(0);
-            this.setAllRGB(rgb);
-            this.show();
-        }
-
-        //% blockId="neopixel_set_strip_color_blk" block="%strip|fill color %rgb| Block %BlkNo"
-        //% weight=85 blockGap=8
-        //% parts="neopixel"
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=89
-        showColorBlk(rgb: number, BlkNo: number) {
-            //    this.update(BlkNo);
-            //    this.setAllRGB(rgb);
-            //    this.show();
-            this.showCustomNew("FFFFFFFFFFFFFFFF", BlkNo, rgb)
-
-        }
-
-        setPixelColor(pixeloffset: number, rgb: number): void {
-            this.setPixelRGB(pixeloffset, rgb);
-        }
-
-        show() {
-            ws2812b.sendBuffer(this.buf, this.pin);
-        }
-
-        //% blockId="clear" block="%strip|clear"
-        //% weight=76
-        //% parts="neopixel"
-        //% BlkNo.min=0 BlkNo.max= 5 
-        clear(): void {
-            this.update(0);
-            this.show();
-        }
-        //% blockId="clearBlk" block="%strip|clear | Block %BlkNo"
-        //% weight=76
-        //% parts="neopixel"
-        //% BlkNo.min=0 BlkNo.max= 5 advanced=true weight=87
-        clearBlk(BlkNo: number): void {
-            this.update(BlkNo);
-            this.show();
-        }
-
-        update(BlkNo: number): void {
-            const stride = this._mode === 1 ? 4 : 3;
-            this.buf.fill(0, BlkNo * 64 * stride, (BlkNo + 1) * 64 * stride);
-        }
-
-        updateAll(): void {
-            let j = 0;
-            const stride = this._mode === 1 ? 4 : 3;
-            for (j = 0; j < this.NoBlk; j++) {
-                this.buf.fill(0, j * 64 * stride, (j + 1) * 64 * stride);
-            }
-        }
-
-        //% weight=59
-        //% parts="neopixel" 
-        //% blockId="setBrightness" block="%strip|set brightness %brightness" blockGap=8
-        //% brightness.min=0 brightness.max=255
-        setBrightness(brightness: number): void {
-            this.brightness = brightness & 0xff;
-        }
-
-        setPin(pin: DigitalPin): void {
-            this.pin = pin;
-            pins.digitalWritePin(this.pin, 0);
-            // don't yield to avoid races on initialization
-        }
-
-        private setBufferRGB(offset: number, red: number, green: number, blue: number): void {
-            if (this._mode === 2) {
-                this.buf[offset + 0] = red;
-                this.buf[offset + 1] = green;
-            } else {
-                this.buf[offset + 0] = green;
-                this.buf[offset + 1] = red;
-            }
-            this.buf[offset + 2] = blue;
-        }
-
-        private setAllRGB(rgb: number) {
-            let red = unpackR(rgb);
-            let green = unpackG(rgb);
-            let blue = unpackB(rgb);
-
-            const br = this.brightness;
-            if (br < 255) {
-                red = (red * br) >> 8;
-                green = (green * br) >> 8;
-                blue = (blue * br) >> 8;
-            }
-            const end = this.start + this._length;
-            const stride = this._mode === 1 ? 4 : 3;
-            for (let i = this.start; i < end; ++i) {
-                this.setBufferRGB(i * stride, red, green, blue)
-            }
-        }
-
-        private setPixelRGB(pixeloffset: number, rgb: number): void {
-            if (pixeloffset < 0
-                || pixeloffset >= this._length)
-                return;
-
-            let stride = this._mode === 1 ? 4 : 3;
-            pixeloffset = (pixeloffset + this.start) * stride;
-
-            let red = unpackR(rgb);
-            let green = unpackG(rgb);
-            let blue = unpackB(rgb);
-
-            let br = this.brightness;
-            if (br < 255) {
-                red = (red * br) >> 8;
-                green = (green * br) >> 8;
-                blue = (blue * br) >> 8;
-            }
-            this.setBufferRGB(pixeloffset, red, green, blue)
-        }
-        // blockGap=50
-        // blockId="showIcons" block="%strip| display Icon %index |Block %BlkNo"
-        // index.fieldEditor="gridpicker" index.fieldOptions.columns=4 advanced=true
-        showIcons(index: Pic, BlkNo: number): void {
-            screen = [0];
-            this.update(BlkNo);
-            switch (index) {
-                case Pic.smile:
-                    screen = [0x00, 0x42, 0xE7, 0x42, 0x00, 0x42, 0x3C, 0x00];
-                    this.display(0xFF00FF, BlkNo);
-                    break;
-                case Pic.eagleEye:
-                    screen = [0x81, 0xC3, 0xA5, 0xFF, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFF00, BlkNo)
-                    screen = [0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFFFF, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x3C];
-                    this.display(0x8a2be2, BlkNo);
-                    break;
-                case Pic.embarrassed:
-                    screen = [0x24, 0x24, 0x24, 0x42, 0x81, 0x00, 0x00, 0x00];
-                    this.display(0x8a2be2, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0x00ffff, BlkNo);
-                    break;
-                case Pic.sad:
-                    screen = [0x42, 0xA5, 0xA5, 0xA5, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x8a2be2, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0x0000ff, BlkNo);
-                    break;
-                case Pic.scaleEys:
-                    screen = [0xF0, 0x90, 0x90, 0xF0, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x0000FF, BlkNo);
-                    screen = [0x00, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x4b0082, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x7E, 0x42];
-                    this.display(0xFFFF00, BlkNo);
-                    break;
-                case Pic.dumbfounded:
-                    screen = [0x00, 0x00, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFF00, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42, 0x00];
-                    this.display(0xFF0000, BlkNo);
-                    break;
-                case Pic.distress:
-                    screen = [0x20, 0x47, 0x80, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0x4b0082, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFF00FF, BlkNo);
-                    break;
-                case Pic.spades:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xFF, 0x5A, 0x18, 0x3C];
-                    this.display(0x8a2be2, BlkNo);
-                    break;
-                case Pic.square:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xFF, 0x7E, 0x3C, 0x18];
-                    this.display(0xFF0000, BlkNo);
-                    break;
-                case Pic.glance:
-                    screen = [0x00, 0xE7, 0x63, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xaaaaaf, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x3C, 0x00];
-                    this.display(0x0000ff, BlkNo);
-                    break;
-                case Pic.blink:
-                    screen = [0x00, 0xE2, 0xE4, 0xE7, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xaaaaaf, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x42, 0x3C, 0x00];
-                    this.display(0x00ffaa, BlkNo);
-                    break;
-                case Pic.anger:
-                    screen = [0x80, 0x42, 0x24, 0xE6, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFF0000, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0xaaaaaf, BlkNo);
-                    break;
-                case Pic.crossEyed:
-                    screen = [0x24, 0xE7, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFA500, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x3C, 0x00];
-                    this.display(0xFF00FF, BlkNo);
-                    break;
-                case Pic.terrorist:
-                    screen = [0x81, 0x66, 0x00, 0x00, 0x00, 0x00, 0x3C, 0x42];
-                    this.display(0xFF0000, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xCD6839, BlkNo);
-                    break;
-                case Pic.dinosaurEgg:
-                    screen = [0x24, 0x66, 0xE7, 0xE7, 0x66, 0x24, 0x00, 0x00];
-                    this.display(0x8a2be2, BlkNo);
-                    screen = [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00];
-                    this.display(0x00FF00, BlkNo);
-                    screen = [0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x00, 0x00];
-                    this.display(0x4b0082, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x83, 0xFF];
-                    this.display(0xFFFFFF, BlkNo);
-                    break;
-                case Pic.whale:
-                    screen = [0x44, 0x28, 0x10, 0x00, 0x00, 0x30, 0x78, 0xFC];
-                    this.display(0xFFFFFF, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x30, 0x78, 0xCD, 0x87, 0x03];
-                    this.display(0x0000FF, BlkNo);
-                    break;
-                case Pic.grizzlies:
-                    screen = [0xC3, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFFFF, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x18, 0x3C, 0x3C, 0x99, 0x7E];
-                    this.display(0xCD6839, BlkNo);
-                    break;
-                case Pic.butterfly:
-                    screen = [0x66, 0x99, 0x81, 0x42, 0x24, 0x42, 0x42, 0x24];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.dog:
-                    screen = [0xC3, 0xC3, 0x7E, 0x5A, 0x7E, 0x7E, 0xC3, 0xFF];
-                    this.display(0xaaaaaf, BlkNo);
-                    break;
-                case Pic.owl:
-                    screen = [0x42, 0x66, 0x7E, 0xFF, 0xDB, 0xFF, 0x7E, 0x3C];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.rocket:
-                    screen = [0x18, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0xA5];
-                    this.display(0xFF0000, BlkNo);
-                    screen = [0x00, 0x24, 0x24, 0x24, 0x24, 0x24, 0x00, 0x00];
-                    this.display(0xFFFFFF, BlkNo);
-                    screen = [0x00, 0x18, 0x18, 0x00, 0x00, 0x00, 0x5A, 0x00];
-                    this.display(0xFFFF00, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.comma:
-                    screen = [0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x00, 0x00, 0x00];
-                    this.display(0x0000FF, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0C, 0x18];
-                    this.display(0xaaaaaf, BlkNo);
-                    break;
-                case Pic.exclamation:
-                    screen = [0x18, 0x18, 0x18, 0x18, 0x18, 0x00, 0x18, 0x18];
-                    this.display(0x0000FF, BlkNo);
-                    break;
-                case Pic.lifting:
-                    screen = [0x00, 0x42, 0xC3, 0xC3, 0xC3, 0xC3, 0x42, 0x00];
-                    this.display(0x0000FF, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x3C, 0x3C, 0x00, 0x00, 0x00];
-                    this.display(0x4b0082, BlkNo);
-                    break;
-                case Pic.peach:
-                    screen = [0x00, 0x66, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 0x18];
-                    this.display(0xFF0000, BlkNo);
-                    break;
-                case Pic.doubt:
-                    screen = [0x3C, 0x7E, 0x66, 0x06, 0x0C, 0x18, 0x00, 0x18];
-                    this.display(0x0000FF, BlkNo);
-                    break;
-                case Pic.left:
-                    screen = [0x00, 0x20, 0x60, 0xFF, 0xFF, 0x60, 0x20, 0x00];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.right:
-                    screen = [0x00, 0x04, 0x06, 0xFF, 0xFF, 0x06, 0x04, 0x00];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.down:
-                    screen = [0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x3C, 0x18];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.up:
-                    screen = [0x18, 0x3C, 0x7E, 0x18, 0x18, 0x18, 0x18, 0x18];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.true:
-                    screen = [0x00, 0x00, 0x03, 0x06, 0xCC, 0x78, 0x30, 0x00];
-                    this.display(0xFF0000, BlkNo);
-                    break;
-                case Pic.key:
-                    screen = [0x38, 0x08, 0x38, 0x08, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFFFFF, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x7E, 0x42, 0x42, 0x7E];
-                    this.display(0x0000FF, BlkNo);
-                    break;
-                case Pic.hanger:
-                    screen = [0x00, 0x00, 0x00, 0x18, 0x24, 0x42, 0x81, 0xFF];
-                    this.display(0x00FF00, BlkNo);
-                    screen = [0x18, 0x24, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFFA500, BlkNo);
-                    break;
-                case Pic.tv:
-                    screen = [0x81, 0x42, 0x24, 0x7E, 0x42, 0x42, 0x42, 0x7E];
-                    this.display(0x0000FF, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x3C, 0x3C, 0x3C, 0x00];
-                    this.display(0x00ff00, BlkNo);
-                    break;
-                case Pic.sailing:
-                    screen = [0x10, 0x10, 0x10, 0x10, 0x10, 0xFF, 0x7E, 0x3C];
-                    this.display(0x4b0082, BlkNo);
-                    screen = [0x00, 0x08, 0x0C, 0x08, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0xFF0000, BlkNo);
-                    break;
-                case Pic.squirrel:
-                    screen = [0x00, 0x00, 0x00, 0x24, 0x00, 0x18, 0x3C, 0x7E];
-                    this.display(0xFFFFFF, BlkNo);
-                    screen = [0x24, 0x24, 0x3C, 0x5A, 0xFF, 0xE7, 0xC3, 0x00];
-                    this.display(0xFFA500, BlkNo);
-                    break;
-                case Pic.et:
-                    screen = [0x3C, 0xFF, 0x99, 0xFF, 0x7E, 0x3C, 0x5A, 0x81];
-                    this.display(0xFF00FF, BlkNo);
-                    break;
-                case Pic.alien:
-                    screen = [0x81, 0x42, 0x3C, 0xFF, 0x99, 0xFF, 0x7E, 0x3C];
-                    this.display(0x4b0082, BlkNo);
-                    break;
-                case Pic.mushroom:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0xC9, 0xDB, 0x00, 0x00];
-                    this.display(0xFFA500, BlkNo);
-                    screen = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7E, 0x66];
-                    this.display(0x00FF00, BlkNo);
-                    break;
-                case Pic.longEars:
-                    screen = [0xE7, 0x3C, 0x7E, 0x5A, 0xFF, 0xBD, 0x3C, 0x7E];
-                    this.display(0xFFA500, BlkNo);
-                    break;
-                case Pic.surprised:
-                    screen = [0x24, 0x7E, 0x5A, 0xFF, 0xFF, 0x66, 0x66, 0x24];
-                    this.display(0x0000FF, BlkNo);
-                    break;
-                case Pic.home:
-                    screen = [0x18, 0x3C, 0x7E, 0xFF, 0x00, 0x00, 0x00, 0x00];
-                    this.display(0x0000FF, BlkNo);
-                    screen = [0x02, 0x02, 0x00, 0x00, 0x5E, 0x7E, 0x7A, 0x7A];
-                    this.display(0xaaaaaf, BlkNo);
-                    break;
-                case Pic.false:
-                    screen = [0x00, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x00];
-                    this.display(0x0000FF, BlkNo);
-                    break;
-            }
-        }
-
-
-
+    export class PacketaMqtt {
+        /**
+         * Obloq receives the message content.
+         */
+        public message: string;
     }
+
+
+    //% advanced=true shim=Obloq::obloqSetTxBufferSize
+    function obloqSetTxBufferSize(size: number): void {
+        return
+    }
+
+    //% advanced=true shim=Obloq::obloqSetRxBufferSize
+    function obloqSetRxBufferSize(size: number): void {
+        return
+    }
+
+    //% advanced=true shim=Obloq::obloqEventOn
+    function obloqEventOn(): void {
+        return
+    }
+
+    //% advanced=true shim=Obloq::obloqClearRxBuffer
+    function obloqClearRxBuffer(): void {
+        return
+    }
+
+    //% advanced=true shim=Obloq::obloqClearTxBuffer
+    function obloqClearTxBuffer(): void {
+        return
+    }
+
+    //% advanced=true shim=Obloq::obloqforevers
+    function obloqforevers(a: Action): void {
+        return
+    }
+
+    function obloqWriteString(text: string): void {
+        serial.writeString(text)
+    }
+
+    function Obloq_wifi_icon_display(): void {
+        switch (OBLOQ_WIFI_ICON) {
+            case 1: {
+                basic.clearScreen()
+                led.plot(0, 4)
+                OBLOQ_WIFI_ICON += 1
+            } break;
+            case 2: {
+                led.plot(0, 2)
+                led.plot(1, 2)
+                led.plot(2, 3)
+                led.plot(2, 4)
+                OBLOQ_WIFI_ICON += 1
+            } break;
+            case 3: {
+                led.plot(0, 0)
+                led.plot(1, 0)
+                led.plot(2, 0)
+                led.plot(3, 1)
+                led.plot(4, 2)
+                led.plot(4, 3)
+                led.plot(4, 4)
+                OBLOQ_WIFI_ICON = 1
+            } break;
+        }
+    }
+
+    function Obloq_mqtt_icon_display(): void {
+        switch (OBLOQ_MQTT_ICON) {
+            case 1: {
+                basic.clearScreen()
+                led.plot(4, 0)
+                OBLOQ_MQTT_ICON += 1
+            } break;
+            case 2: {
+                led.plot(2, 0)
+                led.plot(2, 1)
+                led.plot(3, 2)
+                led.plot(4, 2)
+                OBLOQ_MQTT_ICON += 1
+            } break;
+            case 3: {
+                led.plot(0, 0)
+                led.plot(0, 1)
+                led.plot(0, 2)
+                led.plot(1, 3)
+                led.plot(2, 4)
+                led.plot(3, 4)
+                led.plot(4, 4)
+                OBLOQ_MQTT_ICON = 1
+            } break;
+        }
+    }
+
+    function Obloq_mark_reset(type: string): void {
+        if (type == "wifi") {
+            OBLOQ_WIFI_IP = "0.0.0.0"
+            OBLOQ_WIFI_CONNECT_FIRST = OBLOQ_BOOL_TYPE_IS_TRUE
+            OBLOQ_WIFI_CONNECTED = OBLOQ_BOOL_TYPE_IS_FALSE
+        }
+        OBLOQ_MQTT_INIT = OBLOQ_BOOL_TYPE_IS_FALSE
+        OBLOQ_HTTP_INIT = OBLOQ_BOOL_TYPE_IS_FALSE
+        OBLOQ_WIFI_ICON = 1
+        OBLOQ_WIFI_ICON = 1
+        for (let i = 0; i < OBLOQ_MQTT_TOPIC_NUM_MAX; i++) {
+            OBLOQ_MQTT_TOPIC[i][1] = "false";
+        }
+        led.stopAnimation()
+        basic.clearScreen()
+    }
+
+    function Obloq_serial_init(): void {
+        let item = OBLOQ_STR_TYPE_IS_NONE
+        //First send data through usb, avoid the first data scrambled.
+        obloqWriteString("123")
+        item = serial.readString()
+        item = serial.readString()
+        item = serial.readString()
+        serial.redirect(
+            OBLOQ_SERIAL_TX,
+            OBLOQ_SERIAL_RX,
+            BaudRate.BaudRate9600
+        )
+        obloqSetTxBufferSize(300)
+        obloqSetRxBufferSize(300)
+        obloqWriteString("\r")
+        item = serial.readString()
+        OBLOQ_SERIAL_INIT = OBLOQ_BOOL_TYPE_IS_TRUE
+        obloqClearRxBuffer()
+        obloqClearTxBuffer()
+        onEvent()
+    }
+
+    function Obloq_start_connect_http(): void {
+        OBLOQ_WORKING_MODE_IS_HTTP = OBLOQ_BOOL_TYPE_IS_TRUE
+        let ret = Obloq_connect_wifi()
+        if (OBLOQ_DEBUG) { basic.showNumber(ret) }
+        switch (ret) {
+            case OBLOQ_ERROR_TYPE_IS_SUCCE: {
+                basic.showIcon(IconNames.Yes)
+                basic.pause(500)
+                basic.clearScreen()
+                OBLOQ_WIFI_CONNECTED = OBLOQ_BOOL_TYPE_IS_TRUE
+            } break
+            case OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_TIMEOUT: {
+                basic.showIcon(IconNames.No)
+                basic.pause(500)
+                OBLOQ_WRONG_TYPE = "wifi connect timeout"
+                return
+            } break
+            case OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_FAILURE: {
+                basic.showIcon(IconNames.No)
+                basic.pause(500)
+                OBLOQ_WRONG_TYPE = "wifi connect failure"
+                return
+            } break
+            case OBLOQ_ERROR_TYPE_IS_ERR: {
+                basic.showNumber(ret)
+                basic.showIcon(IconNames.No)
+                while (OBLOQ_BOOL_TYPE_IS_TRUE) { basic.pause(10000) }
+            } break
+        }
+        OBLOQ_HTTP_INIT = OBLOQ_BOOL_TYPE_IS_TRUE
+        OBLOQ_WORKING_MODE_IS_STOP = OBLOQ_BOOL_TYPE_IS_FALSE
+    }
+
+    function Obloq_start_connect_mqtt(SERVER: SERVERS, connectStart: string): void {
+        OBLOQ_WORKING_MODE_IS_MQTT = OBLOQ_BOOL_TYPE_IS_TRUE
+        if (OBLOQ_MQTT_DEFAULT_SERVER) {
+            if (SERVER == SERVERS.China) {
+                OBLOQ_MQTT_SERVER = OBLOQ_MQTT_EASY_IOT_SERVER_CHINA
+            } else if (SERVER == SERVERS.Global) {
+                OBLOQ_MQTT_SERVER = OBLOQ_MQTT_EASY_IOT_SERVER_GLOBAL
+            } else if (SERVER == SERVERS.Local) {
+                OBLOQ_MQTT_SERVER = OBLOQ_MQTT_EASY_IOT_SERVER_LOCAL
+			}
+	
+			
+            OBLOQ_MQTT_PORT = OBLOQ_MQTT_EASY_IOT_PORT
+        } else {
+            OBLOQ_MQTT_SERVER = OBLOQ_MQTT_USER_IOT_SERVER
+            OBLOQ_MQTT_PORT = OBLOQ_MQTT_USER_IOT_PORT
+        }
+
+        let ret = 0
+        if (connectStart == "connect wifi") {
+            ret = Obloq_connect_wifi()
+            if (OBLOQ_DEBUG) { basic.showNumber(ret) }
+            switch (ret) {
+                case OBLOQ_ERROR_TYPE_IS_SUCCE: {
+                    basic.showIcon(IconNames.Yes)
+                    basic.pause(500)
+                    basic.clearScreen()
+                    OBLOQ_WIFI_CONNECTED = OBLOQ_BOOL_TYPE_IS_TRUE
+                } break
+                case OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_TIMEOUT: {
+                    basic.showIcon(IconNames.No)
+                    basic.pause(500)
+                    OBLOQ_WRONG_TYPE = "wifi connect timeout"
+                    return
+                } break
+                case OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_FAILURE: {
+                    basic.showIcon(IconNames.No)
+                    basic.pause(500)
+                    OBLOQ_WRONG_TYPE = "wifi connect failure"
+                    return
+                } break
+                case OBLOQ_ERROR_TYPE_IS_ERR: {
+                    basic.showNumber(ret)
+                    basic.showIcon(IconNames.No)
+                    while (OBLOQ_BOOL_TYPE_IS_TRUE) { basic.pause(10000) }
+                } break
+            }
+        }
+        if (connectStart == "connect wifi" || connectStart == "connect mqtt") {
+            ret = Obloq_connect_iot();
+            switch (ret) {
+                case OBLOQ_ERROR_TYPE_IS_SUCCE: {
+                    basic.showIcon(IconNames.Yes)
+                    basic.pause(500)
+                    basic.clearScreen()
+                } break
+                case OBLOQ_ERROR_TYPE_IS_MQTT_SUBTOPIC_TIMEOUT: {
+                    basic.showIcon(IconNames.No)
+                    basic.pause(500)
+                    OBLOQ_WRONG_TYPE = "mqtt subtopic timeout"
+                    return
+                } break
+                case OBLOQ_ERROR_TYPE_IS_MQTT_SUBTOPIC_FAILURE: {
+                    basic.showIcon(IconNames.No)
+                    basic.pause(500)
+                    OBLOQ_WRONG_TYPE = "mqtt subtopic failure"
+                    return
+                } break
+                case OBLOQ_ERROR_TYPE_IS_MQTT_CONNECT_TIMEOUT: {
+                    basic.showIcon(IconNames.No)
+                    basic.pause(500)
+                    OBLOQ_WRONG_TYPE = "mqtt connect timeout"
+                    return
+                } break
+                case OBLOQ_ERROR_TYPE_IS_MQTT_CONNECT_FAILURE: {
+                    basic.showIcon(IconNames.No)
+                    basic.pause(500)
+                    OBLOQ_WRONG_TYPE = "mqtt connect failure"
+                    return
+                } break
+                case OBLOQ_ERROR_TYPE_IS_ERR: {
+                    basic.showNumber(ret)
+                    basic.showIcon(IconNames.No)
+                    while (OBLOQ_BOOL_TYPE_IS_TRUE) { basic.pause(10000) }
+                } break
+            }
+        }
+        OBLOQ_MQTT_INIT = OBLOQ_BOOL_TYPE_IS_TRUE
+        OBLOQ_WORKING_MODE_IS_STOP = OBLOQ_BOOL_TYPE_IS_FALSE
+    }
+
+    basic.forever(() => {
+        if (OBLOQ_DEBUG) { led.plot(0, 0) }
+        basic.pause(150)
+        if ((OBLOQ_WRONG_TYPE == "wifi disconnect") ||
+            (OBLOQ_WRONG_TYPE == "wifi connect timeout") ||
+            (OBLOQ_WRONG_TYPE == "wifi connect failure") ||
+            (OBLOQ_WRONG_TYPE == "mqtt pulish failure") ||
+            (OBLOQ_WRONG_TYPE == "mqtt subtopic timeout") ||
+            (OBLOQ_WRONG_TYPE == "mqtt subtopic failure") ||
+            (OBLOQ_WRONG_TYPE == "mqtt connect timeout") ||
+            (OBLOQ_WRONG_TYPE == "mqtt connect failure")) {
+            OBLOQ_WORKING_MODE_IS_STOP = OBLOQ_BOOL_TYPE_IS_TRUE
+            let type = "wifi"//OBLOQ_WRONG_TYPE.substr(0,4)
+            Obloq_mark_reset(type)
+            if (OBLOQ_DEBUG) { basic.showString(OBLOQ_WRONG_TYPE) }
+            if (OBLOQ_WORKING_MODE_IS_MQTT) {
+                if (OBLOQ_MQTT_SERVER = OBLOQ_MQTT_EASY_IOT_SERVER_CHINA) {
+                    Obloq_start_connect_mqtt(SERVERS.China, "connect " + type)
+                } else if (OBLOQ_MQTT_SERVER = OBLOQ_MQTT_EASY_IOT_SERVER_GLOBAL) {
+                    Obloq_start_connect_mqtt(SERVERS.Global, "connect " + type)
+                } else {
+                    //do nothing
+                }
+                if (OBLOQ_MQTT_INIT) {
+                    OBLOQ_WRONG_TYPE = OBLOQ_STR_TYPE_IS_NONE
+                    OBLOQ_WORKING_MODE_IS_STOP = OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+            }
+            if (OBLOQ_WORKING_MODE_IS_HTTP) {
+                Obloq_start_connect_http()
+                if (OBLOQ_HTTP_INIT) {
+                    OBLOQ_WRONG_TYPE = OBLOQ_STR_TYPE_IS_NONE
+                    OBLOQ_WORKING_MODE_IS_STOP = OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+            }
+
+        }
+        if (OBLOQ_DEBUG) { led.unplot(0, 0) }
+        basic.pause(150)
+    })
+
     /**
-     * Functions to create NeoPixel strips.
-     * @param NoBlk is number of block in the matrix, eg:1
+     * Two parallel stepper motors are executed simultaneously(DegreeDual).
+     * @param SSID to SSID ,eg: "yourSSID"
+     * @param PASSWORD to PASSWORD ,eg: "yourPASSWORD"
+     * @param IP to IP ,eg: "0.0.0.0"
+     * @param PORT to PORT ,eg: 80
+     * @param receive to receive ,eg: SerialPin.P1
+     * @param send to send ,eg: SerialPin.P2
     */
-    //% blockId="neopixel_Mcreate" block="create Matrix Pin %SerialPinTx| Number of Block %NoBlk"
-    //% weight=90 blockGap=8 
-    //% NoBlk.min=1 NoBlk.max= 6 advanced=true
-    export function create(SerialPinTx: DigitalPin, NoBlk: number): Strip {
-        let strip = new Strip();
-        let mode = 0;
-        let numleds = 64 * NoBlk;
-        let stride = mode === 1 ? 4 : 3;
-        strip.buf = pins.createBuffer(numleds * stride);
-        strip.start = 0;
-        strip._length = numleds;
-        strip._mode = mode;
-        strip._matrixWidth = 0;
-        strip.setBrightness(30)
-        strip.setPin(SerialPinTx)
-        strip.NoBlk = NoBlk
-        return strip;
+    //% weight=99
+    //% receive.fieldEditor="gridpicker" receive.fieldOptions.columns=3
+    //% send.fieldEditor="gridpicker" send.fieldOptions.columns=3
+    //% blockId=Obloq_http_setup
+    //% block="Obloq setup http | Pin set: | receiving data (green wire): %receive| sending data (blue wire): %send | Wi-Fi: | name: %SSID| password: %PASSWORD| http config: | ip: %IP| port: %PORT | start connection"
+    export function Obloq_http_setup(/*serial*/receive: SerialPin, send: SerialPin,
+                                     /*wifi*/SSID: string, PASSWORD: string,
+                                     /*mqtt*/IP: string, PORT: number):
+        void {
+        OBLOQ_WIFI_SSID = SSID
+        OBLOQ_WIFI_PASSWORD = PASSWORD
+        OBLOQ_HTTP_IP = IP
+        OBLOQ_HTTP_PORT = PORT
+        OBLOQ_SERIAL_TX = send
+        OBLOQ_SERIAL_RX = receive
+        Obloq_serial_init()
+        Obloq_start_connect_http()
     }
 
-    //% weight=90
-    //% blockId="neopixel_Screate" block="create Matrix Pin %SerialPinTx"
-    export function SCreate(SerialPinTx: DigitalPin): Strip {
-        return create(SerialPinTx, 1);
+    /**
+     * Two parallel stepper motors are executed simultaneously(DegreeDual).
+     * @param SSID to SSID ,eg: "yourSSID"
+     * @param PASSWORD to PASSWORD ,eg: "yourPASSWORD"
+     * @param IOT_ID to IOT_ID ,eg: "yourIotId"
+     * @param IOT_PWD to IOT_PWD ,eg: "yourIotPwd"
+     * @param IOT_TOPIC to IOT_TOPIC ,eg: "yourIotTopic"
+     * @param receive to receive ,eg: SerialPin.P1
+     * @param send to send ,eg: SerialPin.P2
+    */
+    //% weight=102
+    //% receive.fieldEditor="gridpicker" receive.fieldOptions.columns=3
+    //% send.fieldEditor="gridpicker" send.fieldOptions.columns=3
+    //% SERVER.fieldEditor="gridpicker" SERVER.fieldOptions.columns=2
+    //% blockId=Obloq_mqtt_setup
+    //% block="Obloq setup mqtt | Pin set: | receiving data (green wire): %receive| sending data (blue wire): %send | Wi-Fi: | name: %SSID| password: %PASSWORD| IoT service: | Iot_id: %IOT_ID| Iot_pwd: %IOT_PWD| (default topic_0) Topic: %IOT_TOPIC | start connection: | Servers: %SERVER"
+    export function Obloq_mqtt_setup(/*serial*/receive: SerialPin, send: SerialPin,
+                                     /*wifi*/SSID: string, PASSWORD: string,
+                                     /*mqtt*/IOT_ID: string, IOT_PWD: string, IOT_TOPIC: string,
+                                     /*connect*/SERVER: SERVERS):
+        void {
+        OBLOQ_WIFI_SSID = SSID
+        OBLOQ_WIFI_PASSWORD = PASSWORD
+        OBLOQ_MQTT_PWD = IOT_PWD
+        OBLOQ_MQTT_ID = IOT_ID
+        OBLOQ_MQTT_TOPIC[0][0] = IOT_TOPIC
+        OBLOQ_SERIAL_TX = send
+        OBLOQ_SERIAL_RX = receive
+        Obloq_serial_init()
+        Obloq_start_connect_mqtt(SERVER, "connect wifi")
     }
 
-    //% weight=1
-    //% blockId="neopixel_rgb" block="red %red|green %green|blue %blue"
-    export function rgb(red: number, green: number, blue: number): number {
-        return packRGB(red, green, blue);
+    /**
+     * Disconnect the serial port.
+    */
+    //% weight=200
+    //% blockId=Obloq_mqtt_add_topic
+    //% block="subscribe additional %top |: %IOT_TOPIC"
+    //% top.fieldEditor="gridpicker" top.fieldOptions.columns=2
+    //% advanced=true
+    export function Obloq_mqtt_add_topic(top: TOPIC, IOT_TOPIC: string): void {
+        OBLOQ_MQTT_TOPIC[top][0] = IOT_TOPIC
+        if (!OBLOQ_MQTT_INIT || OBLOQ_WORKING_MODE_IS_STOP) return
+
+        let _timeout = 0
+        if (OBLOQ_MQTT_TOPIC[top][0] != "x" && OBLOQ_MQTT_TOPIC[top][1] == "false") {
+            Obloq_subTopic(<string>OBLOQ_MQTT_TOPIC[top][0])
+        } else {
+            return
+        }
+
+        while (_timeout < 1000) {
+            if (OBLOQ_ANSWER_CMD == "SubOk") {
+                OBLOQ_ANSWER_CMD = OBLOQ_STR_TYPE_IS_NONE
+                OBLOQ_MQTT_TOPIC[top][1] = "true"
+                break
+            } else if (OBLOQ_ANSWER_CMD == "SubFailure") {
+                OBLOQ_WRONG_TYPE = "mqtt subtopic failure"
+                return
+            }
+            basic.pause(1)
+            _timeout += 1
+        }
+        if (_timeout >= 1000 && OBLOQ_ANSWER_CMD != "SubOk") {
+            OBLOQ_WRONG_TYPE = "mqtt subtopic timeout"
+        } else {
+            OBLOQ_MQTT_TOPIC[top][1] = "true"
+        }
     }
 
-    //% weight=2 blockGap=8
-    //% blockId="neopixel_colors" block="%color"
-    export function colors(color: NeoPixelColors): number {
-        return color;
-    }
+    /**
+     * Disconnect the serial port.
+    */
+    /* 
+    export function Obloq_serial_quit(): void { 
+        obloqWriteString("quit!\r")
+    }*/
 
-    function packRGB(a: number, b: number, c: number): number {
-        return ((a & 0xFF) << 16) | ((b & 0xFF) << 8) | (c & 0xFF);
-    }
-    function unpackR(rgb: number): number {
-        let r = (rgb >> 16) & 0xFF;
-        return r;
-    }
-    function unpackG(rgb: number): number {
-        let g = (rgb >> 8) & 0xFF;
-        return g;
-    }
-    function unpackB(rgb: number): number {
-        let b = (rgb) & 0xFF;
-        return b;
-    }
+    /**
+     * Send the ping.time(ms): private long maxWait
+     * @param time to timeout, eg: 10000
+    */
+    //% weight=49
+    //% blockId=Obloq_send_ping
+    //% block="sendPing"
+    //% advanced=true
+    export function Obloq_send_ping(): boolean {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 5000
+        if (time < 100) {
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|1|1|\r")
 
-    function hex2dec(s: string): number {
-        let digits = "0123456789ABCDEFabcdef";
-        let val = 0;
-        let i = 0;
-        let j = 0;
-        let d = 0;
-        for (i = 0; i < s.length; i++) {
-            let c = s.charAt(i);
-            for (j = 0; j < 22; j++) {
-                if (c == digits.charAt(j)) {
-                    d = j;
-                    break;
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "PingOk") {
+                return OBLOQ_BOOL_TYPE_IS_TRUE
+            } else if (OBLOQ_ANSWER_CMD == "timeout") {
+                return OBLOQ_BOOL_TYPE_IS_FALSE
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "PingOk") {
+                    return OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+                else {
+                    return OBLOQ_BOOL_TYPE_IS_TRUE
                 }
             }
-            if (d > 15) {
-                d = d - 6;
+        }
+        return OBLOQ_BOOL_TYPE_IS_FALSE
+    }
+
+
+    /**
+     * Get the software version.time(ms): private long maxWait
+     * @param time to timeout, eg: 10000
+    */
+    //% weight=50
+    //% blockId=Obloq_get_version
+    //% block="get version"
+    //% advanced=true
+    export function Obloq_get_version(): string {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 5000
+        if (time < 100) {
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|1|2|\r")
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "GetVersion") {
+                return OBLOQ_ANSWER_CONTENT
+            } else if (OBLOQ_ANSWER_CMD == "timeout") {
+                return "timeout"
             }
-            val = 16 * val + d;
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "GetVersion") {
+                    return "timeout"
+                }
+                else {
+                    return OBLOQ_ANSWER_CONTENT
+                }
+            }
         }
-        return val;
+        return OBLOQ_STR_TYPE_IS_NONE
     }
 
-    function flipnrot(s: string): number {
-        let digits = "084C2A6E195D3B7F";
-        return s.compare(digits)
-    }
-    export function m2l(n: number): number {
-        let i = 0;
-        let j = 7;
-        let ret = 0;
-        for (i = 0; i < 8; i++) {
-            if (((n >> i) & 0x1) == 1) {
-                ret = ret + 2 ** j;
-            }        // Add code here
-            j = j - 1;
+
+    /**
+     * Heartbeat request.time(ms): private long maxWait
+     * @param time to timeout, eg: 10000
+    */
+    //% weight=48
+    //% blockId=Obloq_get_heartbeat
+    //% block="get heartbeat"
+    //% advanced=true
+    export function Obloq_get_heartbeat(): boolean {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 5000
+        if (time < 100) {
+            time = 100
         }
-        return ret;
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|1|3|" + time + "|\r")
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "Heartbeat") {
+                return OBLOQ_BOOL_TYPE_IS_TRUE
+            } else if (OBLOQ_ANSWER_CMD == "timeout") {
+                return OBLOQ_BOOL_TYPE_IS_FALSE
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "Heartbeat") {
+                    return OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+                else {
+                    return OBLOQ_BOOL_TYPE_IS_TRUE
+                }
+            }
+        }
+        return OBLOQ_BOOL_TYPE_IS_FALSE
+    }
+
+    /**
+     * Stop the heartbeat request.
+    */
+    //% weight=47
+    //% blockId=Obloq_stop_heartbeat
+    //% block="stop heartbeat"
+    //% advanced=true
+    export function Obloq_stop_heartbeat(): boolean {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 5000
+        if (time < 100) {
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|1|3|-2|\r")
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "Heartbeat") {
+                return OBLOQ_BOOL_TYPE_IS_TRUE
+            } else if (OBLOQ_ANSWER_CMD == "timeout") {
+                return OBLOQ_BOOL_TYPE_IS_FALSE
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "Heartbeat") {
+                    return OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+                else {
+                    return OBLOQ_BOOL_TYPE_IS_TRUE
+                }
+            }
+        }
+        return OBLOQ_BOOL_TYPE_IS_FALSE
     }
 
 
+    function Obloq_disconnect_wifi(): boolean {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 5000
+        if (time < 100) {
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|2|2|\r")
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "WifiDisconnect") {
+                Obloq_mark_reset("wifi")
+                return OBLOQ_BOOL_TYPE_IS_TRUE
+            } else if (OBLOQ_ANSWER_CMD == "timeout") {
+                return OBLOQ_BOOL_TYPE_IS_FALSE
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "WifiDisconnect") {
+                    return OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+                else {
+                    return OBLOQ_BOOL_TYPE_IS_TRUE
+                }
+            }
+        }
+        return OBLOQ_BOOL_TYPE_IS_FALSE
+    }
+
+
+    /**
+     * Reconnect WiFi.time(ms): private long maxWait
+     * @param time to timeout, eg: 10000
+    */
+    /* 
+    export function Obloq_wifi_reconnect(): boolean {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 10000
+        if (time < 100) { 
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) { 
+            Obloq_serial_init()
+        }
+        obloqWriteString("|2|3|\r")
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "WifiConnected") { 
+                OBLOQ_WIFI_IP = OBLOQ_ANSWER_CONTENT
+                OBLOQ_WIFI_CONNECT_FIRST = OBLOQ_BOOL_TYPE_IS_FALSE
+                OBLOQ_WIFI_CONNECTED = OBLOQ_BOOL_TYPE_IS_TRUE
+                return OBLOQ_BOOL_TYPE_IS_TRUE
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "WifiConnected") { 
+                    return OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+                else { 
+                    OBLOQ_WIFI_IP = OBLOQ_ANSWER_CONTENT
+                    OBLOQ_WIFI_CONNECT_FIRST = OBLOQ_BOOL_TYPE_IS_FALSE
+                    OBLOQ_WIFI_CONNECTED = OBLOQ_BOOL_TYPE_IS_TRUE
+                    return OBLOQ_BOOL_TYPE_IS_TRUE
+                }
+            }
+        }
+        return OBLOQ_BOOL_TYPE_IS_FALSE
+    }*/
+
+    /**
+     * pin set
+     * @param receive to receive ,eg: SerialPin.P1
+     * @param send to send ,eg: SerialPin.P2
+    */
+    /* 
+    export function Obloq_serial_pin_set(receive: SerialPin, send: SerialPin): void { 
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        OBLOQ_SERIAL_TX = send
+        OBLOQ_SERIAL_RX = receive
+        Obloq_serial_init()
+    }*/
+
+    /**
+     * connect Wifi.SSID(string):account; PWD(string):password;
+     * @param SSID to SSID ,eg: "yourSSID"
+     * @param PASSWORD to PASSWORD ,eg: "yourPASSWORD"
+    */
+    /* 
+    //% weight=100
+    //% blockId=Obloq_wifi_connect_export
+    //% block="wifi connect to| SSID %SSID| PASSWORD %PASSWORD"
+    //% advanced=true
+    export function Obloq_wifi_connect_export(SSID: string, PASSWORD: string): void { 
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        OBLOQ_WIFI_SSID = SSID
+        OBLOQ_WIFI_PASSWORD = PASSWORD
+        Obloq_connect_wifi()
+    }*/
+
+    function Obloq_connect_wifi(): number {
+        if (OBLOQ_WIFI_CONNECTED == OBLOQ_BOOL_TYPE_IS_TRUE) {
+            return OBLOQ_ERROR_TYPE_IS_SUCCE
+        }
+
+        OBLOQ_WIFI_ICON = 1
+        let timeout = 10000  //Set the default timeout period 10s.
+        timeout = timeout < 100 ? 100 : timeout //Timeout minimum resolution 100ms
+
+        let timeout_count_max = timeout / 100
+        let timeout_count_now = 0
+        if (OBLOQ_WIFI_CONNECT_FIRST) {
+            //serial init
+            if (!OBLOQ_SERIAL_INIT) {
+                Obloq_serial_init()
+            }
+            //show icon
+            Obloq_wifi_icon_display()
+            for (let i = 0; i < 3; i++) {
+                obloqWriteString("|1|1|\r")
+                basic.pause(100)
+            }
+            obloqWriteString("|2|1|" + OBLOQ_WIFI_SSID + "," + OBLOQ_WIFI_PASSWORD + "|\r") //Send wifi account and password instructions
+            OBLOQ_WIFI_CONNECT_FIRST = OBLOQ_BOOL_TYPE_IS_FALSE
+        }
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if ((timeout_count_now + 1) % 3 == 0) {
+                Obloq_wifi_icon_display()
+            }
+            if (OBLOQ_ANSWER_CMD == "WifiConnected") {
+                OBLOQ_WIFI_IP = OBLOQ_ANSWER_CONTENT
+                return OBLOQ_ERROR_TYPE_IS_SUCCE
+            } else if (OBLOQ_ANSWER_CMD == "WifiConnectFailure") {
+                return OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_FAILURE
+            }
+            basic.pause(100)
+            timeout_count_now += 1
+            if (timeout_count_now > timeout_count_max) {
+                //basic.showIcon(IconNames.No)
+                return OBLOQ_ERROR_TYPE_IS_WIFI_CONNECT_TIMEOUT
+            }
+        }
+        return OBLOQ_ERROR_TYPE_IS_ERR
+    }
+
+    /**
+     * Get IP address.
+    */
+    //% weight=98
+    //% blockId=Obloq_Obloq_ifconfig
+    //% block="ipconfig"
+    //% advanced=true
+    export function Obloq_wifi_ipconfig(): string {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        return OBLOQ_WIFI_IP
+    }
+
+
+    function Obloq_http_wait_request(time: number): string {
+        if (time < 100) {
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            basic.pause(100)
+            if (OBLOQ_ANSWER_CMD == "200") {//http请求成功
+                return OBLOQ_ANSWER_CONTENT //返回消息
+            } else if (OBLOQ_ANSWER_CMD == "-1") {//获取数据失败
+                Obloq_http_wrong_animation("requestFailed")
+                return OBLOQ_STR_TYPE_IS_NONE
+            } else if (OBLOQ_ANSWER_CMD == "1") {//http请求字段错误
+                Obloq_http_wrong_animation("requestFailed")
+                return OBLOQ_STR_TYPE_IS_NONE
+            }
+
+            _timeout += 1
+            if (_timeout > timeout) {
+                Obloq_http_wrong_animation("timeOut")
+                return OBLOQ_STR_TYPE_IS_NONE
+            }
+        }
+
+        return OBLOQ_STR_TYPE_IS_NONE
+    }
+
+    function Obloq_http_wrong_animation(wrongType: string): void {
+        if (wrongType == "requestFailed") {  //http 请求失败或者字段错误动画
+            basic.showIcon(IconNames.No, 10)
+            basic.pause(500)
+            for (let i = 0; i < 3; i++) {
+                basic.clearScreen()
+                basic.pause(100)
+                basic.showIcon(IconNames.No, 10)
+                basic.pause(50)
+            }
+        } else if (wrongType == "timeOut") { //http 请求超时动画
+            basic.showLeds(`
+                . . # . .
+                . . # . .
+                . . # . .
+                . . . . .
+                . . # . .
+                `, 10)
+            basic.pause(500)
+            for (let i = 0; i < 3; i++) {
+                basic.clearScreen()
+                basic.pause(100)
+                basic.showLeds(`
+                    . . # . .
+                    . . # . .
+                    . . # . .
+                    . . . . .
+                    . . # . .
+                    `, 10)
+                basic.pause(50)
+            }
+        }
+        basic.pause(150)
+        basic.clearScreen()
+    }
+
+    /**
+     * The HTTP get request.url(string):URL:time(ms): private long maxWait
+     * @param time set timeout, eg: 10000
+    */
+    //% weight=79
+    //% blockId=Obloq_http_get
+    //% block="http(get) | url %url| timeout(ms) %time"
+    //% advanced=false
+    export function Obloq_http_get(url: string, time: number): string {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        if (!OBLOQ_HTTP_INIT)
+            return OBLOQ_STR_TYPE_IS_NONE
+
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|3|1|http://" + OBLOQ_HTTP_IP + ":" + OBLOQ_HTTP_PORT + "/" + url + "|\r")
+
+        return Obloq_http_wait_request(time)
+    }
+
+    /**
+     * The HTTP post request.url(string): URL; content(string):content
+     * time(ms): private long maxWait
+     * @param time set timeout, eg: 10000
+    */
+    //% weight=78
+    //% blockId=Obloq_http_post
+    //% block="http(post) | url %url| content %content| timeout(ms) %time"
+    export function Obloq_http_post(url: string, content: string, time: number): string {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        if (!OBLOQ_HTTP_INIT)
+            return OBLOQ_STR_TYPE_IS_NONE
+
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|3|2|http://" + OBLOQ_HTTP_IP + ":" + OBLOQ_HTTP_PORT + "/" + url + "," + content + "|\r")
+
+        return Obloq_http_wait_request(time)
+    }
+
+
+    /**
+     * The HTTP put request,Obloq.put() can only be used for http protocol!
+     * url(string): URL; content(string):content; time(ms): private long maxWait
+     * @param time set timeout, eg: 10000
+    */
+    //% weight=77
+    //% blockId=Obloq_http_put
+    //% block="http(put) | url %url| content %content| timeout(ms) %time"
+    export function Obloq_http_put(url: string, content: string, time: number): string {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        if (!OBLOQ_HTTP_INIT)
+            return OBLOQ_STR_TYPE_IS_NONE
+
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|3|3|http://" + OBLOQ_HTTP_IP + ":" + OBLOQ_HTTP_PORT + "/" + url + "," + content + "|\r")
+
+        return Obloq_http_wait_request(time)
+    }
+
+
+
+
+    /**
+     * Delete an HTTP connection.url(string): URL; content(string):content
+     * time(ms): private long maxWait
+     * @param time set timeout, eg: 10000
+    */
+    /* 
+    export function Obloq_httpDelete(url: string, content: string, time: number): string[] {
+        if (time < 100) { 
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) { 
+            Obloq_serial_init()
+        }
+        obloqWriteString("|3|4|http://"+myip+":"+myport+"/"+url+","+content+"|\r")
+        let item = OBLOQ_STR_TYPE_IS_NONE
+        let num = 0
+        let j = 0
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (e == "200") {
+                let list = ["200", param]
+                return list
+            } else if (e == "err") {
+                let list = ["err", param]
+                return list
+            } else if (e == "|2|1|") {
+                let list = ["999", "disconnet wifi"]
+                return list
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) { 
+                let list = ["408", "time out"]
+                return list
+            }
+        }
+        let list = ["408", "time out"]
+        return list
+    }*/
+
+    function Obloq_connect_mqtt(): void {
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|4|1|1|" + OBLOQ_MQTT_SERVER + "|" + OBLOQ_MQTT_PORT + "|" + OBLOQ_MQTT_ID + "|" + OBLOQ_MQTT_PWD + "|\r")
+    }
+
+
+    function Obloq_connect_iot(): number {
+        OBLOQ_MQTT_ICON = 1
+        let iconnum = 0
+        let _timeout = 0
+        let __timeout = 0
+
+        Obloq_connect_mqtt()
+
+        while (_timeout < 1000) {
+            if (_timeout % 50 == 0) {
+                Obloq_mqtt_icon_display()
+                iconnum += 1;
+            }
+            if (OBLOQ_ANSWER_CMD == "MqttConneted") {
+                break
+            } else if (OBLOQ_ANSWER_CMD == "MqttConnectFailure") {
+                return OBLOQ_ERROR_TYPE_IS_MQTT_CONNECT_FAILURE
+            }
+            basic.pause(1)
+            _timeout += 1
+            
+        }
+        if (_timeout >= 1000 && OBLOQ_ANSWER_CMD != "MqttConneted") {
+            return OBLOQ_ERROR_TYPE_IS_MQTT_CONNECT_TIMEOUT
+        }
+        for (let i = 0; i < OBLOQ_MQTT_TOPIC_NUM_MAX; i++) {
+            if (OBLOQ_MQTT_TOPIC[i][0] != "x" && OBLOQ_MQTT_TOPIC[i][1] == "false") {
+                Obloq_subTopic(<string>OBLOQ_MQTT_TOPIC[i][0])
+            } else {
+                continue
+            }
+            __timeout = _timeout + 2000
+            while (_timeout < __timeout) {
+                if (_timeout % 50 == 0) {
+                    Obloq_mqtt_icon_display()
+                    iconnum += 1
+                }
+                if (iconnum > 3) {//动画一次以上
+                    if (OBLOQ_ANSWER_CMD == "SubOk") {
+                        OBLOQ_MQTT_TOPIC[i][1] = "true";
+                        OBLOQ_ANSWER_CMD = OBLOQ_STR_TYPE_IS_NONE
+                        break
+                    } else if (OBLOQ_ANSWER_CMD == "SubFailure") {
+                        return OBLOQ_ERROR_TYPE_IS_MQTT_SUBTOPIC_FAILURE
+                    }
+                }
+                basic.pause(1)
+                _timeout += 1
+            }
+            if (_timeout >= __timeout) {
+                if (OBLOQ_ANSWER_CMD != "SubOk") {
+                    OBLOQ_ANSWER_CMD = OBLOQ_STR_TYPE_IS_NONE
+                    return OBLOQ_ERROR_TYPE_IS_MQTT_SUBTOPIC_TIMEOUT
+                } else {
+                    OBLOQ_MQTT_TOPIC[i][1] = "true";
+                    OBLOQ_ANSWER_CMD = OBLOQ_STR_TYPE_IS_NONE
+                }
+            }
+        }
+        return OBLOQ_ERROR_TYPE_IS_SUCCE
+        //basic.showString("ok")
+    }
+
+    /**
+     * Reconnect the MQTT.
+    */
+    /* 
+    export function Obloq_mqtt_reconnect(): boolean {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 10000
+        if (time < 100) { 
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) { 
+            Obloq_serial_init()
+        }
+        obloqWriteString("|4|1|5|\r")
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "MqttConneted") {
+                OBLOQ_MQTT_INIT = OBLOQ_BOOL_TYPE_IS_TRUE
+                return OBLOQ_BOOL_TYPE_IS_TRUE
+            } else if (OBLOQ_ANSWER_CMD == "MqttConnectFailure") { 
+                return OBLOQ_BOOL_TYPE_IS_FALSE
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "MqttConneted") { 
+                    return OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+                else { 
+                    OBLOQ_MQTT_INIT = OBLOQ_BOOL_TYPE_IS_TRUE
+                    return OBLOQ_BOOL_TYPE_IS_TRUE
+                }
+            }
+        }
+        return OBLOQ_BOOL_TYPE_IS_FALSE
+    }  */
+
+    /**
+     * Disconnect the MQTT connection.
+    */
+    /* 
+    export function Obloq_mqtt_disconnect(): boolean { 
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        let time = 10000
+        if (time < 100) { 
+            time = 100
+        }
+        let timeout = time / 100
+        let _timeout = 0
+        if (!OBLOQ_SERIAL_INIT) { 
+            Obloq_serial_init()
+        }
+        obloqWriteString("|4|1|4|\r")
+
+        while (OBLOQ_BOOL_TYPE_IS_TRUE) {
+            if (OBLOQ_ANSWER_CMD == "MqttDisconnected") {
+                OBLOQ_MQTT_INIT = OBLOQ_BOOL_TYPE_IS_FALSE
+                return OBLOQ_BOOL_TYPE_IS_TRUE
+            } else if (OBLOQ_ANSWER_CMD == "MqttDisconnectFailure") { 
+                return OBLOQ_BOOL_TYPE_IS_FALSE
+            }
+            basic.pause(100)
+            _timeout += 1
+            if (_timeout > timeout) {
+                if (OBLOQ_ANSWER_CMD != "MqttDisconnected") { 
+                    return OBLOQ_BOOL_TYPE_IS_FALSE
+                }
+                else { 
+                    OBLOQ_MQTT_INIT = OBLOQ_BOOL_TYPE_IS_FALSE
+                    return OBLOQ_BOOL_TYPE_IS_TRUE
+                }
+            }
+        }
+        return OBLOQ_BOOL_TYPE_IS_FALSE
+    }   */
+
+    /**
+     * Send a message.
+     * @param top set top, eg: top
+     * @param mess set mess, eg: mess
+    */
+    //% weight=101
+    //% blockId=Obloq_mqtt_send_message
+    //% block="pubLish %mess |to topic_0"
+    export function Obloq_mqtt_send_message(mess: string): void {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        if (!OBLOQ_MQTT_INIT) {
+            return
+        }
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|4|1|3|" + OBLOQ_MQTT_TOPIC[0][0] + "|" + mess + "|\r")
+    }
+
+    /**
+     * Send a message.
+     * @param top set top, eg: top
+     * @param mess set mess, eg: mess
+    */
+    //% weight=190
+    //% blockId=Obloq_mqtt_send_message_more
+    //% block="pubLish %mess |to %top"
+    //% top.fieldEditor="gridpicker" top.fieldOptions.columns=2
+    //% advanced=true
+    export function Obloq_mqtt_send_message_more(mess: string, top: TOPIC): void {
+        while (OBLOQ_WORKING_MODE_IS_STOP) { basic.pause(20) }
+        if (!OBLOQ_MQTT_INIT) {
+            return
+        }
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        switch (top) {
+            case TOPIC.topic_1: obloqWriteString("|4|1|3|" + OBLOQ_MQTT_TOPIC[1][0] + "|" + mess + "|\r"); break;
+            case TOPIC.topic_2: obloqWriteString("|4|1|3|" + OBLOQ_MQTT_TOPIC[2][0] + "|" + mess + "|\r"); break;
+            case TOPIC.topic_3: obloqWriteString("|4|1|3|" + OBLOQ_MQTT_TOPIC[3][0] + "|" + mess + "|\r"); break;
+            case TOPIC.topic_4: obloqWriteString("|4|1|3|" + OBLOQ_MQTT_TOPIC[4][0] + "|" + mess + "|\r"); break;
+        }
+    }
+
+    /**
+     * Subscribe to a Topic
+     * @param top set top, eg: top
+    */
+    //% weight=67
+    //% blockId=Obloq_subTopic
+    //% advanced=true
+    function Obloq_subTopic(topic: string): void {
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        obloqWriteString("|4|1|2|" + topic + "|\r")
+    }
+
+    function Obloq_mqtt_callback_more(top: TOPIC, a: Action): void {
+        switch (top) {
+            case TOPIC.topic_1: OBLOQ_MQTT_CB[1] = a; break;
+            case TOPIC.topic_2: OBLOQ_MQTT_CB[2] = a; break;
+            case TOPIC.topic_3: OBLOQ_MQTT_CB[3] = a; break;
+            case TOPIC.topic_4: OBLOQ_MQTT_CB[4] = a; break;
+        }
+    }
+
+    function Obloq_mqtt_callback(a: Action): void {
+        OBLOQ_MQTT_CB[0] = a
+    }
+
+
+    /**
+     * This is an MQTT listener callback function, which is very important.
+     * The specific use method can refer to "example/ObloqMqtt.ts"
+    */
+    //% weight=100
+    //% blockGap=50
+    //% mutate=objectdestructuring
+    //% mutateText=PacketaMqtt
+    //% mutateDefaults="message:message"
+    //% blockId=obloq_mqtt_callback_user block="on topic_0 received"
+    export function Obloq_mqtt_callback_user(cb: (packet: PacketaMqtt) => void): void {
+        Obloq_mqtt_callback(() => {
+            const packet = new PacketaMqtt()
+            packet.message = OBLOQ_ANSWER_CONTENT
+            cb(packet)
+        });
+    }
+
+    /**
+     * This is an MQTT listener callback function, which is very important.
+     * The specific use method can refer to "example/ObloqMqtt.ts"
+    */
+    //% weight=180
+    //% blockGap=60
+    //% mutate=objectdestructuring
+    //% mutateText=PacketaMqtt
+    //% mutateDefaults="message:message"
+    //% blockId=obloq_mqtt_callback_user_more block="on %top |received"
+    //% top.fieldEditor="gridpicker" top.fieldOptions.columns=2
+    //% advanced=true
+    export function Obloq_mqtt_callback_user_more(top: TOPIC, cb: (packet: PacketaMqtt) => void) {
+        Obloq_mqtt_callback_more(top, () => {
+            const packet = new PacketaMqtt()
+            packet.message = OBLOQ_ANSWER_CONTENT
+            cb(packet)
+        });
+    }
+
+
+    function Obloq_serial_recevice(): void {
+
+        let Obloq_message_str = serial.readString()
+        let size = Obloq_message_str.length
+        let item = Obloq_message_str
+
+        if (item.indexOf("|4|1|1|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "MqttConneted"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|1|2|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "MqttConnectFailure"
+            OBLOQ_ANSWER_CONTENT = item.substr(9, size - 2 - 9)
+            return
+        } else if (item.indexOf("|4|1|2|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "SubOk"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|2|2|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "SubCeiling"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|2|2|2|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "SubFailure"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|3|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "PulishOk"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|3|2|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "PulishFailure"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            OBLOQ_WRONG_TYPE = "mqtt pulish failure"
+            return
+        } else if (item.indexOf("|4|1|4|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "MqttDisconnected"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|4|2|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "MqttDisconnectFailure"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|5|") != -1) {//|4|1|5|topic|message|
+            let str = item.substr(7, size - 2 - 7)
+            let num = str.indexOf("|")
+            OBLOQ_ANSWER_CMD = str.substr(0, num)
+            OBLOQ_ANSWER_CONTENT = str.substr(num + 1, str.length - OBLOQ_ANSWER_CMD.length - 1)
+            switch (OBLOQ_ANSWER_CMD) {
+                case OBLOQ_MQTT_TOPIC[0][0]: { if (OBLOQ_MQTT_CB[0] != null) obloqforevers(OBLOQ_MQTT_CB[0]); } break;
+                case OBLOQ_MQTT_TOPIC[1][0]: { if (OBLOQ_MQTT_CB[1] != null) obloqforevers(OBLOQ_MQTT_CB[1]); } break;
+                case OBLOQ_MQTT_TOPIC[2][0]: { if (OBLOQ_MQTT_CB[2] != null) obloqforevers(OBLOQ_MQTT_CB[2]); } break;
+                case OBLOQ_MQTT_TOPIC[3][0]: { if (OBLOQ_MQTT_CB[3] != null) obloqforevers(OBLOQ_MQTT_CB[3]); } break;
+                case OBLOQ_MQTT_TOPIC[4][0]: { if (OBLOQ_MQTT_CB[4] != null) obloqforevers(OBLOQ_MQTT_CB[4]); } break;
+            }
+            return
+        } else if (item.indexOf("|4|1|6|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "UnSubOk"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|6|2|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "UnSubFailure"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|4|1|6|2|2|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "UnSubFailure"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|1|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "PingOk"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|1|2|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "GetVersion"
+            OBLOQ_ANSWER_CONTENT = item.substr(5, size - 2 - 5)//version
+            return
+        } else if (item.indexOf("|1|3|", 0) != -1) {
+            if (OBLOQ_MQTT_INIT) {
+                OBLOQ_ANSWER_CMD = "Heartbeat"
+                OBLOQ_ANSWER_CONTENT = "OK"
+            }
+            return
+        } else if (item.indexOf("|2|1|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "WifiDisconnect"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            if (OBLOQ_MQTT_INIT || OBLOQ_HTTP_INIT || OBLOQ_WIFI_CONNECTED) {
+                OBLOQ_WRONG_TYPE = "wifi disconnect"
+            }
+            return
+        } else if (item.indexOf("|2|2|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "WifiConnecting"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|2|3|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "WifiConnected"
+            OBLOQ_ANSWER_CONTENT = item.substr(5, size - 2 - 5)//IP addr
+            return
+        } else if (item.indexOf("|2|4|", 0) != -1) {
+            OBLOQ_ANSWER_CMD = "WifiConnectFailure"
+            OBLOQ_ANSWER_CONTENT = OBLOQ_STR_TYPE_IS_NONE
+            return
+        } else if (item.indexOf("|3|", 0) != -1) {//|3|errcode|message|
+            let str = item.substr(3, size - 2 - 3)
+            let num = str.indexOf("|")
+            OBLOQ_ANSWER_CMD = str.substr(0, num)
+            OBLOQ_ANSWER_CONTENT = str.substr(num + 1, str.length - OBLOQ_ANSWER_CMD.length - 1)
+            return
+        } else {
+            return
+        }
+    }
+
+    function onEvent() {
+        if (!OBLOQ_SERIAL_INIT) {
+            Obloq_serial_init()
+        }
+        OBLOQ_MQTT_EVENT = OBLOQ_BOOL_TYPE_IS_TRUE
+        obloqEventOn()
+        control.onEvent(<number>32, <number>1, Obloq_serial_recevice); // register handler
+    }
 }
